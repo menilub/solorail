@@ -11,7 +11,7 @@
 
 ## Acceptance Criteria
 - [x] No number in any `.solorail/sprints/sprint-*.md` is hand-authored; every metric block is script-written and the two blocks always agree. *(E03-ISS-01)*
-- [x] `sync_metrics.py` never deletes content below the block it rewrites. *(E03-ISS-01)*
+- [x] `sync_metrics.py` never deletes content below the block it rewrites — verified at `##`, `###` and `#` levels, with indented and fenced marker mentions, and on CLOSED sprints. *(E03-ISS-01, after a reopen: this was prematurely checked off once and falsified by code review.)*
 - [ ] Every script resolves the sprint by `Status: ACTIVE`, not by filename order.
 - [ ] A sprint's `Status:` transitions `ACTIVE` → `CLOSED` automatically, derived from its issue rows plus the retro's existence.
 - [ ] `/solorail:evolve` generates the next sprint from a template, carrying over `TODO`/`BLOCKED` rows.

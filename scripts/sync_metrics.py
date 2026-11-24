@@ -47,52 +47,156 @@ def parse_markdown_table(lines: list[str], header_marker: str):
     return start_idx, end_idx, rows
 
 
-def replace_block(lines: list[str], marker: str, new_block: list[str]) -> list[str]:
-    """Replace the section starting at `marker` with `new_block`, preserving
-    everything below it.
+FENCE = "```"
+HEADING_RE = re.compile(r"^#{1,6} ")
 
-    The section ends at the next top-level '## ' heading, so any following
-    section (e.g. '## Pull Requests') survives. When `marker` is absent the
-    block is appended at EOF. This never truncates the file -- the previous
-    implementation sliced to EOF and silently deleted everything below the
-    marker.
+
+def sentinel_tags(block_name: str) -> tuple[str, str]:
+    """Return the (start, end) sentinel comments delimiting a managed block.
+
+    Sentinels replace the old '## '-prefix heuristic for locating a block.
+    Heading-shape matching could not distinguish a real heading from an
+    indented or fenced mention of one, and treated '### '/'# ' sections as
+    non-boundaries -- so they were deleted along with the block.
     """
+    return (
+        f"<!-- solorail:{block_name}:start -->",
+        f"<!-- solorail:{block_name}:end -->",
+    )
+
+
+def fenced_line_flags(lines: list[str]) -> list[bool]:
+    """Mark each line that sits inside a ``` fenced code block.
+
+    Markdown inside a fence is an example, not structure: a fenced '## Metrics'
+    must never be mistaken for the real heading, in either direction.
+    """
+    flags = [False] * len(lines)
+    in_fence = False
+    for i, line in enumerate(lines):
+        if line.lstrip().startswith(FENCE):
+            flags[i] = True
+            in_fence = not in_fence
+            continue
+        flags[i] = in_fence
+    return flags
+
+
+def is_orphan_sentinel(line: str) -> bool:
+    """True for any SoloRail sentinel comment line.
+
+    Used to sweep up sentinels written under a previous block name during the
+    heading-fallback path, so renames do not leave stray comments behind.
+    """
+    stripped = line.strip()
+    return stripped.startswith("<!-- solorail:") and stripped.endswith("-->")
+
+
+def find_block_bounds(lines: list[str], marker: str, block_name: str):
+    """Locate the managed block as a half-open [start, end) line range.
+
+    Prefers the sentinel pair. Falls back to the literal heading for files
+    written before sentinels existed, bounded by the next heading of ANY level
+    so sub-sections below the block are preserved. Returns None when absent.
+    """
+    start_tag, end_tag = sentinel_tags(block_name)
+
     start_idx = None
     for i, line in enumerate(lines):
-        if line.strip().startswith(marker):
+        stripped = line.strip()
+        if stripped == start_tag:
             start_idx = i
-            break
+        elif stripped == end_tag and start_idx is not None:
+            # Absorb the blank separator that follows the block; wrap_block
+            # re-adds exactly one, so repeated syncs stay idempotent instead
+            # of accumulating a blank line per run.
+            end = i + 1
+            while end < len(lines) and not lines[end].strip():
+                end += 1
+            return start_idx, end
 
-    if start_idx is None:
-        return lines + ["\n"] + new_block
+    fenced = fenced_line_flags(lines)
 
-    # Find the next top-level heading after the marker; that bounds the section.
-    end_idx = len(lines)
-    for j in range(start_idx + 1, len(lines)):
-        if lines[j].startswith("## "):
-            end_idx = j
-            break
+    # Migration path: exact heading match at column 0, outside any fence.
+    for i, line in enumerate(lines):
+        if fenced[i] or line.rstrip("\n").rstrip() != marker:
+            continue
 
-    return lines[:start_idx] + new_block + lines[end_idx:]
+        # Absorb orphaned sentinels left by an earlier run under a different
+        # block name, so a rename does not strand a stray comment above the
+        # heading or below the block.
+        start = i
+        while start > 0 and is_orphan_sentinel(lines[start - 1]):
+            start -= 1
+
+        end = len(lines)
+        for j in range(i + 1, len(lines)):
+            if not fenced[j] and HEADING_RE.match(lines[j]):
+                end = j
+                break
+        while end < len(lines) and is_orphan_sentinel(lines[end]):
+            end += 1
+
+        return start, end
+
+    return None
 
 
-def render_metrics_table(total_est: float, total_actual: float,
+def wrap_block(block_name: str, content: list[str]) -> list[str]:
+    """Wrap rendered content in its sentinel pair, with a trailing blank line.
+
+    The trailing blank keeps a following heading from being glued onto the last
+    line of the block.
+    """
+    start_tag, end_tag = sentinel_tags(block_name)
+    return [f"{start_tag}\n"] + content + [f"{end_tag}\n", "\n"]
+
+
+def replace_block(lines: list[str], marker: str, new_block: list[str],
+                  block_name: str | None = None) -> list[str]:
+    """Replace the managed block identified by `marker` with `new_block`,
+    preserving everything else in the file.
+
+    Never truncates: content below the block -- headings of any level, prose,
+    or further managed blocks -- is retained. When the block is absent it is
+    inserted before the first heading that follows `marker`'s expected
+    position, or appended at EOF.
+    """
+    name = block_name or marker.lstrip("#").strip().lower().replace(" ", "-")
+    bounds = find_block_bounds(lines, marker, name)
+    wrapped = wrap_block(name, new_block)
+
+    if bounds is None:
+        if lines and not lines[-1].endswith("\n"):
+            lines = lines[:-1] + [lines[-1] + "\n"]
+        return lines + ["\n"] + wrapped
+
+    start_idx, end_idx = bounds
+    return lines[:start_idx] + wrapped + lines[end_idx:]
+
+
+def render_metrics_table(total_est: float, total_actual_active: float,
+                         total_cut: float, total_actual_cut: float,
                          active_count: int, done_count: int,
                          cut_count: int) -> list[str]:
     """Render the '## Metrics' block.
 
-    Planned column holds planned values, Actual column holds measured values.
-    Previously hand-authored and never synced, which let it drift out of
-    agreement with the velocity summary below it.
+    'Total Hours' compares active-only estimate against active-only actual, so
+    both columns share one basis. Cut work is reported on its own row rather
+    than folded into the Actual column, which previously let Actual exceed
+    Planned after a /solorail:pivot with no visible explanation.
+
+    Total Hours actual + Cut Hours actual reconciles exactly to the velocity
+    summary's 'Total Actual'.
     """
     return [
         "## Metrics\n",
         "| Metric | Planned | Actual |\n",
         "| :--- | :--- | :--- |\n",
-        f"| **Total Hours** | {total_est:.1f}h | {total_actual:.1f}h |\n",
+        f"| **Total Hours** | {total_est:.1f}h | {total_actual_active:.1f}h |\n",
+        f"| **Cut Hours** | {total_cut:.1f}h | {total_actual_cut:.1f}h |\n",
         f"| **Issues Completed** | {active_count} | {done_count} |\n",
-        f"| **Issues Cut** | 0 | {cut_count} |\n",
-        "\n",
+        f"| **Issues Cut** | — | {cut_count} |\n",
     ]
 
 
@@ -112,6 +216,22 @@ def render_velocity_summary(total_est: float, total_cut: float,
         f"- **Completed / Total Active Issues:** {done_count} / {active_count}\n",
         f"- **Scope Changes (Cut Issues):** {cut_count}\n",
     ]
+
+
+def is_closed_sprint(lines: list[str]) -> bool:
+    """True when the sprint header declares 'Status: CLOSED'.
+
+    Only the header block is consulted, so an issue row mentioning the word
+    cannot flip the whole board to frozen.
+    """
+    for line in lines:
+        if HEADING_RE.match(line) and not line.startswith("# "):
+            break
+        if line.lstrip().startswith("|"):
+            break
+        if "status:" in line.lower() and "closed" in line.lower():
+            return True
+    return False
 
 
 def sync():
@@ -135,6 +255,8 @@ def sync():
         total_est_active = 0.0
         total_cut = 0.0
         total_actual = 0.0
+        total_actual_active = 0.0
+        total_actual_cut = 0.0
         done_count = 0
         active_count = 0
         cut_count = 0
@@ -164,9 +286,11 @@ def sync():
 
             if status == "CUT":
                 total_cut += est
+                total_actual_cut += act
                 cut_count += 1
             else:
                 total_est_active += est
+                total_actual_active += act
                 active_count += 1
                 if status == "DONE":
                     done_count += 1
@@ -175,6 +299,14 @@ def sync():
             total_actual += act
             epic_act[epic_id] = epic_act.get(epic_id, 0.0) + act
 
+        # A CLOSED sprint is frozen history. Its rows still feed the ROADMAP
+        # epic totals above, but the file itself is never rewritten -- this
+        # hook fires on every Edit/Write, so silently editing closed sprint
+        # boards would mutate committed history with no diff review.
+        if is_closed_sprint(lines):
+            print(f"SoloRail skipped {os.path.basename(sp_path)}: Status CLOSED (frozen)")
+            continue
+
         # Both blocks are rendered from the same computed totals, so they can
         # never disagree (ADR-004).
         lines = replace_block(
@@ -182,11 +314,14 @@ def sync():
             "## Metrics",
             render_metrics_table(
                 total_est=total_est_active,
-                total_actual=total_actual,
+                total_actual_active=total_actual_active,
+                total_cut=total_cut,
+                total_actual_cut=total_actual_cut,
                 active_count=active_count,
                 done_count=done_count,
                 cut_count=cut_count,
             ),
+            block_name="metrics",
         )
         lines = replace_block(
             lines,
@@ -199,6 +334,7 @@ def sync():
                 active_count=active_count,
                 cut_count=cut_count,
             ),
+            block_name="velocity-summary",
         )
 
         with open(sp_path, "w", encoding="utf-8") as f:

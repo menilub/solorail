@@ -80,7 +80,40 @@ Must **not** be touched by this issue:
 
 ## Definition of Done
 
-- [ ] All 5 tests pass via `python3 scripts/test_sync_metrics.py`.
+- [ ] All tests pass via `python3 scripts/test_sync_metrics.py`.
 - [ ] Existing suites still pass: `test_enforce_gate.py`, `test_check_worktree.py`, `test_compute_actual_hours.py`.
-- [ ] Running `sync_metrics.py` on the live repo makes sprint-02's `## Metrics` table read `12.0h / 0.0h`, `8 / 0`, `0 / 0`.
-- [ ] A manually added section below `## Time & Velocity Summary` survives a sync.
+- [ ] Running `sync_metrics.py` on the live repo makes sprint-02's `## Metrics` table agree with the velocity summary below it.
+- [ ] A manually added section below `## Time & Velocity Summary` survives a sync — **at any heading level** (`##`, `###`, `#`).
+- [ ] An indented or fenced mention of a block marker is not mistaken for the block itself.
+- [ ] Each block ends with a blank line, so a following heading is never glued to it.
+- [ ] A sprint whose header reads `Status: CLOSED` is left byte-identical.
+- [ ] Repeated syncs are idempotent and leave no orphaned sentinels.
+
+## Revision — 2026-11-24 (post code review)
+
+The first implementation was marked DONE and then **reopened**: an independent review falsified the "never deletes content" criterion. Five correctness defects and two doc defects were found. What changed:
+
+**Block location moved from a heading heuristic to sentinel comments.** `replace_block` originally found a block by `line.strip().startswith("## Metrics")` and ended it at the next column-0 `## `. That was wrong three ways, so the mechanism was replaced rather than patched:
+
+- A `### ` or `# ` section below the block was **not** a boundary, so it was deleted — the very bug this issue existed to fix.
+- The start scan stripped the line while the boundary scan did not, so an indented prose mention of `## Metrics` matched as a block start, producing two disagreeing tables.
+- A `## ` line inside a ``` fence was treated as structure, orphaning the fence delimiter.
+
+Blocks are now delimited by `<!-- solorail:<name>:start -->` / `:end`, with a heading-match fallback (bounded by any heading level, fence-aware) for files written before sentinels, which also sweeps up sentinels orphaned by a block rename.
+
+**Added helpers:** `sentinel_tags`, `fenced_line_flags`, `find_block_bounds`, `wrap_block`, `is_orphan_sentinel`, `is_closed_sprint`.
+
+**`## Metrics` column basis corrected.** `Total Hours` compared an active-only estimate against an actual that *included* cut issues, so Actual could exceed Planned after a pivot with no explanation, and `Issues Cut` had a hardcoded `0` in the Planned column. Cut work now has its own `Cut Hours` row on a matching basis; `Issues Cut` Planned renders `—`. Total Hours actual + Cut Hours actual reconciles to the summary's `Total Actual`.
+
+**`render_velocity_summary` now ends with a blank line** via `wrap_block`. It previously omitted it, gluing a following `## ` heading onto the last bullet — the original tests missed this because they hand-supplied a `\n` the real renderer never produced.
+
+**CLOSED sprints are no longer rewritten.** `sync()` globbed every `sprint-*.md` unconditionally while running as a `PostToolUse` hook, so any defect above could mutate committed sprint history during an unrelated edit. Closed boards are now skipped for writing; their rows still feed ROADMAP epic totals.
+
+### Revised allowlist
+
+Unchanged: `scripts/sync_metrics.py`, `scripts/test_sync_metrics.py`.
+
+### Documentation defects fixed outside the allowlist (`.solorail/`, gate-exempt)
+
+- `retros/sprint-01-retro.md` claimed E-03 was DRAFT and awaiting `/solorail:plan-epic`, contradicting `ROADMAP.md` in the same commit.
+- The same retro rewrite had deleted the only record of **why** telemetry reports `6/7 architected issues` (E01-ISS-04 was pivot-added with no spec receipt) and of the E02-ISS-01 worktree root cause. Both restored.

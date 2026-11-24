@@ -15,6 +15,8 @@
   - E01 overhead (README + GUIDE.md + linking) bundled together more efficiently than estimated.
   - E02 enforcement was a single `enforce_gate.py` addition + `SKILL.md` update, not the more complex multi-stage rollout initially scoped.
 - **Spec ambiguity caught mid-sprint:** E02-ISS-03 (computed vs. file-mtime Actual hours) had two valid implementations; user confirmed literal wall-clock spec before build, avoiding rework.
+- **E01-ISS-04 has no spec or verified receipt on file.** It was added by pivot (version restart) without going through `/solorail:architect-issue`. This is why `sprint-01-telemetry.md` reports **6/7 architected issues passed verified diff receipts** — that figure reflects the missing receipt, not a failed verification. Pivot-added issues currently bypass the spec stage.
+- **Worktree detection bug root cause (E02-ISS-01):** `git worktree list` reports the primary checkout alongside linked ones, so a naive membership test flagged the main checkout as "inside a worktree". The fix compares `git rev-parse --git-dir` against `--git-common-dir`, which differ only in a genuinely linked worktree.
 
 ## Context & Skill Updates Applied
 - **Added 3 Learned Guardrails** to `CONTEXT.md` Section 5:
@@ -25,6 +27,8 @@
 - **No archival needed:** Guardrails at 3/15 capacity; ADRs at 3 entries; no token-bloat risk.
 
 ## Next Sprint (Sprint 02)
-- **Roadmap:** E-03 (Day-2 Disruption Handling & Sprint Evolution) is DRAFT, ready for `/solorail:plan-epic`.
+- **Roadmap:** E-03 is **ACTIVE**, planned on 2026-11-24 as "Day-2 Disruption Handling & Deterministic Status Sync" — widened from the PRD's original title to absorb the status-sync plumbing found in the post-sprint review. 8 issues, 12.0h.
 - **Capacity:** 20.0h (default 2-week sprint).
 - **Carryover:** No `TODO` or `BLOCKED` issues from sprint-01 (all DONE).
+
+> This section was written while E-03 was still DRAFT and said it awaited `/solorail:plan-epic`. Corrected after planning so it no longer contradicts `ROADMAP.md`, which `/solorail:status` reads alongside it.
