@@ -3,7 +3,7 @@
 - **Start Date:** 2026-11-24
 - **End Date:** 2026-12-08
 - **Capacity:** 20.0h
-- **Status:** ACTIVE
+- **Status:** CLOSED
 
 ## Planned Issues
 | ID | Epic | Issue | Status | Est | Actual | Started At | Notes |
