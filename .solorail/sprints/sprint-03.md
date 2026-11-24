@@ -7,7 +7,7 @@
 
 ## Planned Issues
 | ID | Epic | Issue | Status | Est | Actual | Started At | Notes |
-| E04-ISS-01 | E-04 | Wire `next_sprint.py` into `/solorail:evolve` skill | TODO | 0.5h | - | - | One-line edit to call the script |
+| E04-ISS-01 | E-04 | Wire `next_sprint.py` into `/solorail:evolve` skill | DONE | 0.5h | 0.25h | 2026-11-25 02:30 | One-line edit to evolve skill + test; all tests pass |
 | E04-ISS-02 | E-04 | Update skill instructions to source scripts from `.solorail/scripts/` | TODO | 1.0h | - | - | Fix plugin cache sourcing issue |
 | E04-ISS-03 | E-04 | Bump version to 0.4.0 and test marketplace install | TODO | 1.0h | - | - | Update plugin.json, marketplace.json, README |
 | E04-ISS-04 | E-04 | Write marketplace listing and configure auto-publish | TODO | 1.5h | - | - | MVP polish complete; ready for beta |

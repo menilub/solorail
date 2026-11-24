@@ -1,0 +1,16 @@
+{
+  "issue_id": "E04-ISS-01",
+  "timestamp": "2026-11-25T02:35:00Z",
+  "verified_files": [
+    "./.claude/plugins/cache/solorail/solorail/0.4.0-beta/skills/evolve/SKILL.md",
+    "./scripts/test_evolve_wiring.py"
+  ],
+  "tests_passed": true,
+  "test_count": 3,
+  "acceptance_criteria_met": [
+    "next_sprint.py CLI is wired into /solorail:evolve skill prose",
+    "Skill calls the script with CLAUDE_PLUGIN_ROOT variable",
+    "Old hand-author wording removed"
+  ],
+  "notes": "One-line edit to evolve/SKILL.md replaces user-ask with script call. Test suite added to verify wiring. All existing tests pass."
+}
