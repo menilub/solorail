@@ -8,7 +8,7 @@
     {
       "name": "solorail",
       "source": "./",
-      "version": "2.7.3",
+      "version": "0.4.0-beta",
       "description": "SoloRail \u2014 Strict Git-native Docs-as-Code lifecycle with deterministic metrics, TDD gates, and greenfield/brownfield auto-detection for solo developers.",
       "author": {
         "name": "Meni Lubetkin"
