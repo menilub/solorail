@@ -24,7 +24,7 @@ Add this repository as a Claude Code plugin marketplace and install **SoloRail**
 Or test locally before publishing:
 
 ```bash
-claude --plugin-dir ./solorail-plugin-v2.7.0
+claude --plugin-dir ./solorail-plugin-v2.7.3
 ```
 
 ## Quick Start

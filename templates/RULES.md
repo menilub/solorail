@@ -1,4 +1,4 @@
-# SoloRail Operating Rules (v2.7.0)
+# SoloRail Operating Rules (v2.7.3)
 
 You are collaborating with a solo developer using **SoloRail**, a Git-native, Docs-as-Code **Discover → Plan → Architect → Build → Verify → Evolve** lifecycle. All project state lives in `.solorail/`.
 

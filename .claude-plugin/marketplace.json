@@ -1,13 +1,19 @@
 {
   "name": "solorail",
+  "description": "Marketplace for SoloRail \u2014 a strict, Git-native Docs-as-Code lifecycle plugin for solo developers.",
   "owner": {
-    "name": "SoloRail"
+    "name": "Meni Lubetkin"
   },
   "plugins": [
     {
       "name": "solorail",
       "source": "./",
-      "description": "SoloRail — Strict Git-native Docs-as-Code lifecycle with deterministic metrics, TDD gates, and greenfield/brownfield auto-detection."
+      "version": "2.7.3",
+      "description": "SoloRail \u2014 Strict Git-native Docs-as-Code lifecycle with deterministic metrics, TDD gates, and greenfield/brownfield auto-detection for solo developers.",
+      "author": {
+        "name": "Meni Lubetkin"
+      },
+      "license": "MIT"
     }
   ]
 }

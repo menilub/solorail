@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Telemetry evaluator for SoloRail v2.7.0.
+"""Telemetry evaluator for SoloRail v2.7.3.
 
 Parses Git history, sprint boards, and ROADMAP.md to generate a Markdown report:
 1. Sprint Throughput Rate

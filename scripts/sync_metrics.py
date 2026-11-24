@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deterministic metrics synchronizer for SoloRail v2.7.0.
+"""Deterministic metrics synchronizer for SoloRail v2.7.3.
 
 Parses active sprint boards (.solorail/sprints/sprint-*.md) and updates:
 1. Each sprint file's 'Time & Velocity Summary' block.

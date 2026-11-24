@@ -10,8 +10,8 @@ argument-hint: "[optional sprint number]"
 Check `.solorail/sprints/sprint-XX.md`. If ANY issue is `IN_PROGRESS`, ABORT and tell the user to close (`/solorail:verify-issue`), pause (`/solorail:block`), or drop (`/solorail:pivot`) all active issues before evolving.
 
 1. **Calculate Telemetry:**
-   - Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/sync_metrics.py`.
-   - Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/eval_metrics.py` to generate `.solorail/retros/sprint-XX-telemetry.md`.
+   - Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/sync_metrics.py"`.
+   - Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/eval_metrics.py"` to generate `.solorail/retros/sprint-XX-telemetry.md`.
    - Read the telemetry report to inform the retrospective.
 2. **Distill & Prune Guardrails:**
    - Add 1–3 concrete lessons to `## 5. Learned Guardrails` in `.solorail/CONTEXT.md`.

@@ -1,5 +1,10 @@
 {
   "name": "solorail",
-  "version": "2.7.0",
-  "description": "SoloRail — Strict Git-native Docs-as-Code lifecycle with deterministic metrics, TDD gates, and greenfield/brownfield auto-detection for solo developers."
+  "version": "2.7.3",
+  "description": "SoloRail \u2014 Strict Git-native Docs-as-Code lifecycle with deterministic metrics, TDD gates, and greenfield/brownfield auto-detection for solo developers.",
+  "author": {
+    "name": "Meni Lubetkin"
+  },
+  "license": "MIT",
+  "icon": "./.claude-plugin/icon.png"
 }

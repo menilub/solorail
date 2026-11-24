@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PreToolUse gatekeeper hook for SoloRail v2.7.0.
+"""PreToolUse gatekeeper hook for SoloRail v2.7.3.
 
 Physically blocks Claude Code from editing application code outside the active workflow:
 1. Requires an issue marked IN_PROGRESS in .solorail/sprints/sprint-*.md.
@@ -40,6 +40,11 @@ def normalize_rel_path(raw_path: str) -> str:
     return rel.replace("\\", "/")
 
 
+def block(reason: str):
+    print(reason, file=sys.stderr)
+    sys.exit(2)
+
+
 def main():
     target_path = ""
     if not sys.stdin.isatty():
@@ -72,24 +77,21 @@ def main():
 
     active_issue = get_active_issue(os.path.join(solorail_dir, "sprints"))
     if not active_issue:
-        print("BLOCKED [SoloRail]: No issue is IN_PROGRESS. Run `/solorail:architect-issue <ID>` (or `/solorail:hotfix`) first.")
-        sys.exit(2)
+        block("BLOCKED [SoloRail]: No issue is IN_PROGRESS. Run `/solorail:architect-issue <ID>` (or `/solorail:hotfix`) first.")
 
     if active_issue.startswith("BUG-"):
         sys.exit(0)
 
     spec_path = os.path.join(solorail_dir, "specs", f"{active_issue}-spec.md")
     if not os.path.exists(spec_path):
-        print(f"BLOCKED [SoloRail]: Stage 2 skipped. Run `/solorail:architect-issue {active_issue}` before writing code.")
-        sys.exit(2)
+        block(f"BLOCKED [SoloRail]: Stage 2 skipped. Run `/solorail:architect-issue {active_issue}` before writing code.")
 
     with open(spec_path, "r", encoding="utf-8") as f:
         spec_content = f.read()
 
     basename = os.path.basename(rel_path)
     if rel_path not in spec_content and basename not in spec_content:
-        print(f"SCOPE VIOLATION [SoloRail]: '{rel_path}' is not allowlisted in .solorail/specs/{active_issue}-spec.md.")
-        sys.exit(2)
+        block(f"SCOPE VIOLATION [SoloRail]: '{rel_path}' is not allowlisted in .solorail/specs/{active_issue}-spec.md.")
 
     sys.exit(0)
 
