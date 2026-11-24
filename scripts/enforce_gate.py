@@ -2,15 +2,42 @@
 """PreToolUse gatekeeper hook for SoloRail v2.7.3.
 
 Physically blocks Claude Code from editing application code outside the active workflow:
-1. Requires an issue marked IN_PROGRESS in .solorail/sprints/sprint-*.md.
-2. Requires a technical spec receipt (.solorail/specs/<ID>-spec.md) unless it is a BUG-XX hotfix.
-3. Requires the target file to be explicitly listed in that spec receipt.
+1. Requires the current branch to not be 'main'/'master' (hard block, not a warning).
+2. Requires an issue marked IN_PROGRESS in .solorail/sprints/sprint-*.md.
+3. Requires a technical spec receipt (.solorail/specs/<ID>-spec.md) unless it is a BUG-XX hotfix.
+4. Requires the target file to be explicitly listed in that spec receipt.
 """
 
 import glob
 import json
 import os
+import subprocess
 import sys
+
+
+def get_current_branch(cwd: str = None) -> str:
+    """Return the current branch name via `git rev-parse --abbrev-ref HEAD`,
+    or None if git is unavailable, the command fails, or cwd isn't a repo."""
+    target = cwd if cwd is not None else os.getcwd()
+    try:
+        result = subprocess.run(
+            ["git", "-C", target, "rev-parse", "--abbrev-ref", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except (FileNotFoundError, OSError):
+        return None
+
+    if result.returncode != 0 or not result.stdout:
+        return None
+
+    return result.stdout.strip() or None
+
+
+def is_protected_branch(branch: str) -> bool:
+    """True iff branch is exactly 'main' or 'master'. None/anything else fails open."""
+    return branch in ("main", "master")
 
 
 def get_active_issue(sprints_dir: str):
@@ -74,6 +101,14 @@ def main():
     solorail_dir = os.path.join(os.getcwd(), ".solorail")
     if not os.path.exists(solorail_dir):
         sys.exit(0)
+
+    current_branch = get_current_branch()
+    if is_protected_branch(current_branch):
+        block(
+            f"BLOCKED [SoloRail]: Cannot edit application code directly on "
+            f"'{current_branch}'. Create a feature branch first, e.g. "
+            f"`git checkout -b feat/<ISSUE-ID>`."
+        )
 
     active_issue = get_active_issue(os.path.join(solorail_dir, "sprints"))
     if not active_issue:

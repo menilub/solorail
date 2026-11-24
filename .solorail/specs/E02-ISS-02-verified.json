@@ -1,0 +1,30 @@
+{
+  "issue_id": "E02-ISS-02",
+  "epic_id": "E-02",
+  "verified_at": "2026-11-24T22:30:00",
+  "status": "DONE",
+  "estimated_hours": 1.5,
+  "actual_hours": 1.0,
+  "test_results": {
+    "suites": ["scripts/test_check_worktree.py", "scripts/test_enforce_gate.py"],
+    "framework": "unittest (stdlib)",
+    "passed": 14,
+    "failed": 0,
+    "errors": 0
+  },
+  "verified_files": [
+    "scripts/enforce_gate.py",
+    "scripts/test_enforce_gate.py",
+    "skills/build-issue/SKILL.md",
+    "skills/verify-issue/SKILL.md",
+    ".solorail/specs/E02-ISS-02-spec.md",
+    ".solorail/sprints/sprint-01.md",
+    ".solorail/epics/epic-02.md",
+    ".solorail/CONTEXT.md"
+  ],
+  "acceptance_criteria_met": [
+    "Every issue is developed on its own feature branch -- build-issue's branch-check gate hard-blocks (not just warns) edits made directly on main/master",
+    "verify-issue opens a pull request to close out an issue instead of only printing merge instructions"
+  ],
+  "notes": "Live smoke test confirmed: app-code edit on 'main' blocked with exit 2; .solorail/ state edits still allowed on 'main'; app-code edit allowed on a non-main/master branch with an allowlisted file; scope violation still correctly blocked on an unallowlisted file. No PR opened by this verification run: the session is on the Conductor-managed branch 'menilub/solorail-status-v2', not a feat/E02-ISS-02 or hotfix/ branch, so per the updated verify-issue Step 4 this is stated plainly and skipped rather than opening a duplicate/unrelated PR."
+}

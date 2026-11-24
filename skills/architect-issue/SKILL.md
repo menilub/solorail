@@ -21,5 +21,5 @@ Check `.solorail/sprints/sprint-*.md`. If another issue is already `IN_PROGRESS`
 3. **Generate State Receipt:** Write the spec to `.solorail/specs/<ISSUE-ID>-spec.md`. This file MUST exist for SoloRail's gatekeeper to permit code edits in Stage 3.
 4. **Log Decisions & Prepare Workspace:**
    - Append a 4-line ADR to `.solorail/CONTEXT.md` if an irreversible technical decision was made.
-   - Offer to create an isolated Git worktree (`git worktree add ../wt-<ISSUE-ID> -b feat/<ISSUE-ID>`).
+   - **Worktree Check:** Run `python3 scripts/check_worktree.py`. If it prints `true`, the session is already inside an active Git worktree (including a Conductor-managed one) — state that plainly and do NOT offer to create a nested worktree. Only if it prints `false`, offer to create an isolated Git worktree (`git worktree add ../wt-<ISSUE-ID> -b feat/<ISSUE-ID>`).
    - Update `.solorail/sprints/sprint-XX.md`: set Status to `IN_PROGRESS` and record `Started At` (`YYYY-MM-DD HH:MM`).
