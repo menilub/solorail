@@ -1,0 +1,59 @@
+{
+  "issue_id": "E03-ISS-03",
+  "epic_id": "E-03",
+  "title": "Derive and write the sprint Status transition automatically",
+  "verified_at": "2026-11-24T23:55:00Z",
+  "started_at": "2026-11-24 23:45",
+  "estimated_hours": 1.5,
+  "actual_hours": 0.5,
+  "actual_hours_source": "scripts/compute_actual_hours.py (ADR-003, raw wall-clock, 0.5h floor)",
+  "status": "DONE",
+  "branch": "menilub/solorail-status-v3",
+  "verified_files": [
+    {
+      "path": "scripts/solorail_state.py",
+      "change": "modified",
+      "detail": "Added issue_statuses, retro_path_for, derive_sprint_status, write_sprint_status. Derivation is one-directional: it can return 'CLOSED' or None, never 'ACTIVE'."
+    },
+    {
+      "path": "scripts/sync_metrics.py",
+      "change": "modified",
+      "detail": "Derives and writes the header Status before the CLOSED freeze check, so a newly closeable sprint is written once and frozen from the next sync onward."
+    },
+    { "path": "scripts/test_solorail_state.py", "change": "modified", "detail": "13 tests added covering every derivation rule, the writer's line-shape preservation, and two sync integration paths." }
+  ],
+  "allowlist_respected": true,
+  "no_go_violations": [],
+  "tests": { "total_discovered": 69, "result": "OK", "command": "python3 -m unittest discover -s scripts" },
+  "design_decisions": [
+    {
+      "decision": "A retro file must exist before a sprint can auto-close.",
+      "why": "Without the interlock a sprint would flip to CLOSED the instant the last issue was marked DONE -- mid-session, as a side effect of an unrelated edit, before /solorail:evolve had run. Closure now follows the lifecycle instead of racing it."
+    },
+    {
+      "decision": "derive_sprint_status never returns 'ACTIVE'; CLOSED -> ACTIVE is not automated.",
+      "why": "Auto-reopening would let an unrelated edit silently resurrect frozen sprint history. Reopening stays a deliberate human act (edit the header), after which sync resumes managing the board."
+    },
+    {
+      "decision": "A board with zero issue rows never auto-closes.",
+      "why": "An unplanned sprint is not a finished one."
+    },
+    {
+      "decision": "Status is derived before the freeze check, and only for sprints not already CLOSED.",
+      "why": "Keeps E03-ISS-01's freeze intact while still allowing the single ACTIVE -> CLOSED write to land."
+    }
+  ],
+  "definition_of_done": [
+    { "criterion": "All new tests pass; full suite green", "met": true, "evidence": "69 discovered across 5 suites, OK (was 56)" },
+    { "criterion": "All rows DONE/CUT plus a retro transitions to CLOSED on one sync", "met": true, "evidence": "Live fixture sprint-05: rows DONE + retro present -> Status CLOSED" },
+    { "criterion": "Same fixture without a retro stays ACTIVE", "met": true, "evidence": "Live fixture: rows DONE, no retro -> Status ACTIVE" },
+    { "criterion": "A TODO row plus a retro stays ACTIVE", "met": true, "evidence": "Live fixture: one TODO row + retro -> Status ACTIVE" },
+    { "criterion": "Live sprint-02 stays ACTIVE and sprint-01 stays CLOSED and byte-identical", "met": true, "evidence": "sprint-02 ACTIVE with 6 open issues; md5 of sprint-01.md unchanged across a sync, which logs 'skipped ... Status CLOSED (frozen)'" },
+    { "criterion": "No automatic CLOSED -> ACTIVE transition exists", "met": true, "evidence": "derive_sprint_status returns None for a CLOSED board regardless of rows or retro; covered by test_never_returns_active" }
+  ],
+  "defects_closed": [
+    "The sprint Status field had no writer at all; the ACTIVE -> CLOSED edit was made by hand during Sprint 01's evolve",
+    "A forgotten manual edit would have left two sprints reading ACTIVE, making resolve_active_sprint warn about ambiguous state on every hook invocation"
+  ],
+  "notes": "Unblocks E03-ISS-04: closing a sprint is what permits generating the next one. The evolve skill's prose still describes the manual transition; updating plugin skill text was explicitly out of scope here, so the code is now authoritative and the prose is merely redundant."
+}

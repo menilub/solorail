@@ -12,11 +12,15 @@ import unittest
 from contextlib import redirect_stderr
 
 from solorail_state import (
+    derive_sprint_status,
     is_closed_sprint,
+    issue_statuses,
     list_sprint_files,
     read_sprint_status,
     resolve_active_sprint,
+    retro_path_for,
     sprint_number,
+    write_sprint_status,
 )
 
 HEADER = "# Sprint {n}\n\n- **Status:** {status}\n\n## Planned Issues\n"
@@ -184,6 +188,160 @@ class ComputeActualHoursIntegrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             write_sprint(tmp, 1, "ACTIVE", "")
             self.assertIsNone(_find_started_at("E99-ISS-99", tmp))
+
+
+def rows(*statuses: str) -> str:
+    return "".join(
+        f"| E03-ISS-{i:02d} | E-03 | Thing {i} | {s} | 1.0h | 1.0h | - | - |\n"
+        for i, s in enumerate(statuses, start=1)
+    )
+
+
+def board(status: str, *issue_statuses_: str) -> list[str]:
+    return (
+        HEADER.format(n=2, status=status) + ROW_HEADER + rows(*issue_statuses_)
+    ).splitlines(keepends=True)
+
+
+class DeriveSprintStatusTests(unittest.TestCase):
+    """E03-ISS-03: closure is derived, never hand-typed."""
+
+    def test_closes_when_all_done_and_retro_exists(self):
+        """Test 1."""
+        self.assertEqual(
+            derive_sprint_status(board("ACTIVE", "DONE", "CUT"), retro_exists=True),
+            "CLOSED",
+        )
+
+    def test_does_not_close_with_todo_remaining(self):
+        """Test 2: an open row blocks closure even with a retro."""
+        self.assertIsNone(
+            derive_sprint_status(board("ACTIVE", "DONE", "TODO"), retro_exists=True)
+        )
+
+    def test_does_not_close_with_in_progress_or_blocked(self):
+        """Test 3."""
+        self.assertIsNone(
+            derive_sprint_status(board("ACTIVE", "DONE", "IN_PROGRESS"), retro_exists=True)
+        )
+        self.assertIsNone(
+            derive_sprint_status(board("ACTIVE", "DONE", "BLOCKED"), retro_exists=True)
+        )
+
+    def test_does_not_close_without_retro(self):
+        """Test 4: the interlock. Without it a sprint would flip to CLOSED
+        mid-session as a side effect of an unrelated edit."""
+        self.assertIsNone(
+            derive_sprint_status(board("ACTIVE", "DONE", "DONE"), retro_exists=False)
+        )
+
+    def test_empty_board_never_closes(self):
+        """Test 5: an unplanned sprint is not a finished one."""
+        self.assertIsNone(derive_sprint_status(board("ACTIVE"), retro_exists=True))
+
+    def test_never_returns_active(self):
+        """Test 6: no automatic resurrection of frozen history."""
+        for retro in (True, False):
+            self.assertIsNone(
+                derive_sprint_status(board("CLOSED", "DONE", "TODO"), retro_exists=retro)
+            )
+
+    def test_issue_statuses_reads_rows_in_order(self):
+        self.assertEqual(
+            issue_statuses(board("ACTIVE", "DONE", "TODO", "CUT")),
+            ["DONE", "TODO", "CUT"],
+        )
+
+
+class WriteSprintStatusTests(unittest.TestCase):
+    def test_preserves_line_shape(self):
+        """Test 7: bold markers and list prefix survive."""
+        lines = board("ACTIVE", "DONE")
+        result = write_sprint_status(lines, "CLOSED")
+        joined = "".join(result)
+
+        self.assertIn("- **Status:** CLOSED\n", joined)
+        self.assertNotIn("ACTIVE", joined)
+        self.assertEqual(read_sprint_status(result), "CLOSED")
+
+    def test_noop_without_header_status_line(self):
+        """Test 8: never invent a Status line."""
+        lines = ["# Sprint 03\n", "\n", "## Planned Issues\n"]
+        self.assertEqual(write_sprint_status(lines, "CLOSED"), lines)
+
+    def test_does_not_touch_issue_row_mentioning_status(self):
+        lines = (
+            HEADER.format(n=2, status="ACTIVE")
+            + ROW_HEADER
+            + "| E03-ISS-01 | E-03 | Thing | DONE | 1.0h | 1.0h | - | was ACTIVE earlier |\n"
+        ).splitlines(keepends=True)
+
+        joined = "".join(write_sprint_status(lines, "CLOSED"))
+        self.assertIn("was ACTIVE earlier", joined)
+        self.assertIn("- **Status:** CLOSED\n", joined)
+
+
+class RetroPathTests(unittest.TestCase):
+    def test_maps_sprint_to_retro(self):
+        """Test 9."""
+        self.assertTrue(
+            retro_path_for(os.path.join("x", ".solorail", "sprints", "sprint-07.md"))
+            .endswith(os.path.join(".solorail", "retros", "sprint-07-retro.md"))
+        )
+
+
+class SyncClosureIntegrationTests(unittest.TestCase):
+    def test_sprint_closes_then_freezes(self):
+        """Test 10: one sync closes the board; the next leaves it alone."""
+        from sync_metrics import sync
+
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as tmp:
+            sprints_dir = os.path.join(tmp, ".solorail", "sprints")
+            retros_dir = os.path.join(tmp, ".solorail", "retros")
+            os.makedirs(sprints_dir)
+            os.makedirs(retros_dir)
+            sprint_path = write_sprint(
+                sprints_dir, 7, "ACTIVE",
+                "| E07-ISS-01 | E-07 | Done | DONE | 2.0h | 2.0h | - | - |\n",
+            )
+            with open(os.path.join(retros_dir, "sprint-07-retro.md"), "w") as f:
+                f.write("# Sprint 07 Retro\n")
+
+            try:
+                os.chdir(tmp)
+                sync()
+                with open(sprint_path) as f:
+                    after_close = f.read()
+                sync()
+                with open(sprint_path) as f:
+                    after_freeze = f.read()
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertIn("- **Status:** CLOSED", after_close)
+        self.assertEqual(after_close, after_freeze, "closed board must then be frozen")
+
+    def test_sprint_without_retro_stays_active(self):
+        from sync_metrics import sync
+
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as tmp:
+            sprints_dir = os.path.join(tmp, ".solorail", "sprints")
+            os.makedirs(sprints_dir)
+            sprint_path = write_sprint(
+                sprints_dir, 8, "ACTIVE",
+                "| E08-ISS-01 | E-08 | Done | DONE | 1.0h | 1.0h | - | - |\n",
+            )
+            try:
+                os.chdir(tmp)
+                sync()
+            finally:
+                os.chdir(original_cwd)
+            with open(sprint_path) as f:
+                result = f.read()
+
+        self.assertIn("- **Status:** ACTIVE", result)
 
 
 if __name__ == "__main__":

@@ -75,6 +75,86 @@ def is_closed_sprint(lines: list[str]) -> bool:
     return read_sprint_status(lines) == "CLOSED"
 
 
+OPEN_STATUSES = {"TODO", "IN_PROGRESS", "BLOCKED"}
+CLOSEABLE_STATUSES = {"DONE", "CUT"}
+
+
+def issue_statuses(lines: list[str]) -> list[str]:
+    """Upper-cased Status cell of every issue row, in board order.
+
+    Empty when the board carries no issue rows (header and separator only).
+    """
+    statuses = []
+    for line in lines:
+        if "|" not in line:
+            continue
+        cells = [c.strip() for c in line.split("|")]
+        # Row shape: ['', ID, Epic, Issue, Status, Est, Actual, Started At, Notes, '']
+        if len(cells) < 6:
+            continue
+        issue_id, status = cells[1], cells[4].upper()
+        if issue_id in ("ID", "", "-") or set(issue_id) <= set(":- "):
+            continue
+        if status in OPEN_STATUSES or status in CLOSEABLE_STATUSES:
+            statuses.append(status)
+    return statuses
+
+
+def retro_path_for(sprint_path: str) -> str:
+    """The retro path matching a sprint board.
+
+    .solorail/sprints/sprint-07.md -> .solorail/retros/sprint-07-retro.md
+    """
+    name = os.path.basename(sprint_path).removesuffix(".md")
+    solorail_dir = os.path.dirname(os.path.dirname(sprint_path))
+    return os.path.join(solorail_dir, "retros", f"{name}-retro.md")
+
+
+def derive_sprint_status(lines: list[str], retro_exists: bool) -> str | None:
+    """The status the board should declare, or None to leave it unchanged.
+
+    'CLOSED' requires every issue row to be DONE/CUT, at least one row, and a
+    retro on disk. The retro is the interlock: without it a sprint would flip
+    to CLOSED the instant the last issue was marked DONE -- mid-session, as a
+    side effect of an unrelated edit, before `/solorail:evolve` had run.
+
+    Never returns 'ACTIVE'. Auto-reopening would let an unrelated edit
+    resurrect frozen history, so reopening stays a deliberate human act.
+    """
+    if read_sprint_status(lines) == "CLOSED":
+        return None
+
+    statuses = issue_statuses(lines)
+    if not statuses:
+        # An unplanned board is not a finished one.
+        return None
+    if any(s in OPEN_STATUSES for s in statuses):
+        return None
+    if not retro_exists:
+        return None
+    return "CLOSED"
+
+
+def write_sprint_status(lines: list[str], status: str) -> list[str]:
+    """Replace the header's Status value, preserving the line's markdown shape.
+
+    Returns the lines unchanged when the header has no Status line: this
+    function never invents one.
+    """
+    updated = list(lines)
+    for i, line in enumerate(updated):
+        stripped = line.lstrip()
+        if stripped.startswith("|"):
+            break
+        if HEADING_RE.match(line) and not line.startswith("# "):
+            break
+        match = STATUS_RE.search(line)
+        if match:
+            updated[i] = line[: match.start(1)] + status + line[match.end(1):]
+            return updated
+    return lines
+
+
 def resolve_active_sprint(sprints_dir: str) -> str | None:
     """Path of the sprint to act on, or None when there are no sprint files.
 

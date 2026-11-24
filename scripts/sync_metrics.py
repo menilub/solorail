@@ -10,7 +10,13 @@ import glob
 import os
 import re
 
-from solorail_state import is_closed_sprint
+from solorail_state import (
+    derive_sprint_status,
+    is_closed_sprint,
+    read_sprint_status,
+    retro_path_for,
+    write_sprint_status,
+)
 
 
 def parse_hours(val: str) -> float:
@@ -284,6 +290,22 @@ def sync():
 
             total_actual += act
             epic_act[epic_id] = epic_act.get(epic_id, 0.0) + act
+
+        # Derive the sprint's own Status before the freeze check, so a sprint
+        # that just became closeable gets its header written once and is frozen
+        # from the next sync onward (E03-ISS-03). The field previously had no
+        # writer at all and was edited by hand during Sprint 01's evolve.
+        derived = derive_sprint_status(
+            lines, os.path.exists(retro_path_for(sp_path))
+        )
+        if derived and read_sprint_status(lines) != derived:
+            lines = write_sprint_status(lines, derived)
+            with open(sp_path, "w", encoding="utf-8") as f:
+                f.writelines(lines)
+            print(
+                f"SoloRail closed {os.path.basename(sp_path)}: "
+                "all issues DONE/CUT and retro present"
+            )
 
         # A CLOSED sprint is frozen history. Its rows still feed the ROADMAP
         # epic totals above, but the file itself is never rewritten -- this
