@@ -19,8 +19,8 @@
 ## Metrics
 | Metric | Planned | Actual |
 | :--- | :--- | :--- |
-| **Total Hours** | 6.5h | 0.0h |
-| **Issues Completed** | 0 | 0 |
+| **Total Hours** | 9.0h | 4.5h |
+| **Issues Completed** | 7 | 7 |
 | **Issues Cut** | 0 | 0 |
 
 ## Time & Velocity Summary

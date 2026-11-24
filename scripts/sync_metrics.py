@@ -47,6 +47,73 @@ def parse_markdown_table(lines: list[str], header_marker: str):
     return start_idx, end_idx, rows
 
 
+def replace_block(lines: list[str], marker: str, new_block: list[str]) -> list[str]:
+    """Replace the section starting at `marker` with `new_block`, preserving
+    everything below it.
+
+    The section ends at the next top-level '## ' heading, so any following
+    section (e.g. '## Pull Requests') survives. When `marker` is absent the
+    block is appended at EOF. This never truncates the file -- the previous
+    implementation sliced to EOF and silently deleted everything below the
+    marker.
+    """
+    start_idx = None
+    for i, line in enumerate(lines):
+        if line.strip().startswith(marker):
+            start_idx = i
+            break
+
+    if start_idx is None:
+        return lines + ["\n"] + new_block
+
+    # Find the next top-level heading after the marker; that bounds the section.
+    end_idx = len(lines)
+    for j in range(start_idx + 1, len(lines)):
+        if lines[j].startswith("## "):
+            end_idx = j
+            break
+
+    return lines[:start_idx] + new_block + lines[end_idx:]
+
+
+def render_metrics_table(total_est: float, total_actual: float,
+                         active_count: int, done_count: int,
+                         cut_count: int) -> list[str]:
+    """Render the '## Metrics' block.
+
+    Planned column holds planned values, Actual column holds measured values.
+    Previously hand-authored and never synced, which let it drift out of
+    agreement with the velocity summary below it.
+    """
+    return [
+        "## Metrics\n",
+        "| Metric | Planned | Actual |\n",
+        "| :--- | :--- | :--- |\n",
+        f"| **Total Hours** | {total_est:.1f}h | {total_actual:.1f}h |\n",
+        f"| **Issues Completed** | {active_count} | {done_count} |\n",
+        f"| **Issues Cut** | 0 | {cut_count} |\n",
+        "\n",
+    ]
+
+
+def render_velocity_summary(total_est: float, total_cut: float,
+                            total_actual: float, done_count: int,
+                            active_count: int, cut_count: int) -> list[str]:
+    """Render the '## Time & Velocity Summary' block.
+
+    Format is kept byte-identical to the pre-E03-ISS-01 output so downstream
+    readers (eval_metrics.py, the status skill) keep parsing it.
+    """
+    return [
+        "## Time & Velocity Summary\n",
+        f"- **Total Estimated (Active):** {total_est:.1f}h\n",
+        f"- **Total Cut:** {total_cut:.1f}h\n",
+        f"- **Total Actual:** {total_actual:.1f}h\n",
+        f"- **Completed / Total Active Issues:** {done_count} / {active_count}\n",
+        f"- **Scope Changes (Cut Issues):** {cut_count}\n",
+    ]
+
+
 def sync():
     solorail_dir = os.path.join(os.getcwd(), ".solorail")
     if not os.path.exists(solorail_dir):
@@ -108,26 +175,31 @@ def sync():
             total_actual += act
             epic_act[epic_id] = epic_act.get(epic_id, 0.0) + act
 
-        summary_marker = "## Time & Velocity Summary"
-        sum_idx = None
-        for i, line in enumerate(lines):
-            if line.strip().startswith(summary_marker):
-                sum_idx = i
-                break
-
-        new_summary = [
-            "## Time & Velocity Summary\n",
-            f"- **Total Estimated (Active):** {total_est_active:.1f}h\n",
-            f"- **Total Cut:** {total_cut:.1f}h\n",
-            f"- **Total Actual:** {total_actual:.1f}h\n",
-            f"- **Completed / Total Active Issues:** {done_count} / {active_count}\n",
-            f"- **Scope Changes (Cut Issues):** {cut_count}\n",
-        ]
-
-        if sum_idx is not None:
-            lines = lines[:sum_idx] + new_summary
-        else:
-            lines.extend(["\n"] + new_summary)
+        # Both blocks are rendered from the same computed totals, so they can
+        # never disagree (ADR-004).
+        lines = replace_block(
+            lines,
+            "## Metrics",
+            render_metrics_table(
+                total_est=total_est_active,
+                total_actual=total_actual,
+                active_count=active_count,
+                done_count=done_count,
+                cut_count=cut_count,
+            ),
+        )
+        lines = replace_block(
+            lines,
+            "## Time & Velocity Summary",
+            render_velocity_summary(
+                total_est=total_est_active,
+                total_cut=total_cut,
+                total_actual=total_actual,
+                done_count=done_count,
+                active_count=active_count,
+                cut_count=cut_count,
+            ),
+        )
 
         with open(sp_path, "w", encoding="utf-8") as f:
             f.writelines(lines)
