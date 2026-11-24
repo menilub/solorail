@@ -8,11 +8,13 @@ Physically blocks Claude Code from editing application code outside the active w
 4. Requires the target file to be explicitly listed in that spec receipt.
 """
 
-import glob
 import json
 import os
 import subprocess
 import sys
+
+from solorail_state import resolve_active_sprint
+from spec_allowlist import is_allowlisted
 
 
 def get_current_branch(cwd: str = None) -> str:
@@ -41,10 +43,13 @@ def is_protected_branch(branch: str) -> bool:
 
 
 def get_active_issue(sprints_dir: str):
-    sprint_files = sorted(glob.glob(os.path.join(sprints_dir, "sprint-*.md")))
-    if not sprint_files:
+    # Resolve by declared Status, not by filename order: selecting the last
+    # filename meant the gate stopped enforcing an IN_PROGRESS issue as soon
+    # as a newer sprint file existed (E03-ISS-02).
+    sprint_path = resolve_active_sprint(sprints_dir)
+    if not sprint_path:
         return None
-    with open(sprint_files[-1], "r", encoding="utf-8") as f:
+    with open(sprint_path, "r", encoding="utf-8") as f:
         for line in f:
             if "|" not in line:
                 continue
@@ -53,6 +58,67 @@ def get_active_issue(sprints_dir: str):
             if len(parts) >= 5 and parts[4].upper() == "IN_PROGRESS":
                 return parts[1]
     return None
+
+
+RECORD_KEEPING_PREFIXES = (".solorail", ".claude", ".context")
+RECORD_KEEPING_FILES = ("CLAUDE.md",)
+
+
+def is_record_keeping_path(rel_path: str) -> bool:
+    """True for paths that record work rather than perform it.
+
+    These stay writable with no issue IN_PROGRESS and on a protected branch,
+    because between sprints -- exactly when retro, review and planning work
+    happens -- everything else is correctly read-only, which previously pushed
+    record-keeping out of the repo entirely.
+
+    Deliberately NOT a blanket '*.md' exemption: that would unlock README.md
+    and every doc under a source tree, and documentation is often exactly what
+    an issue is scoped to change. Prefixes are matched at directory
+    boundaries, and anything escaping the repo root is refused.
+    """
+    if not rel_path:
+        return False
+    normalized = rel_path.replace("\\", "/")
+    if normalized.startswith("../") or normalized == "..":
+        return False
+    if normalized in RECORD_KEEPING_FILES:
+        return False if "/" in normalized else True
+    first_segment = normalized.split("/", 1)[0]
+    return first_segment in RECORD_KEEPING_PREFIXES
+
+
+def read_target_path(argv: list[str] = None) -> str:
+    """The hook's target path: argv[1] when given, else the JSON payload.
+
+    argv is checked FIRST and stdin is not read at all when argv supplies a
+    path. Reading stdin unconditionally made the gate hang forever when it was
+    invoked with a path from a context whose stdin was an open pipe that never
+    closed -- json.load simply waits.
+    """
+    args = sys.argv if argv is None else argv
+    if len(args) > 1 and args[1]:
+        return args[1]
+
+    try:
+        if sys.stdin.isatty():
+            return ""
+        raw = sys.stdin.read()
+    except Exception:
+        return ""
+
+    if not raw or not raw.strip():
+        return ""
+    try:
+        data = json.loads(raw)
+    except (ValueError, TypeError):
+        return ""
+    if not isinstance(data, dict):
+        return ""
+    tool_input = data.get("tool_input") or {}
+    if not isinstance(tool_input, dict):
+        return ""
+    return tool_input.get("file_path") or tool_input.get("path") or ""
 
 
 def normalize_rel_path(raw_path: str) -> str:
@@ -73,29 +139,16 @@ def block(reason: str):
 
 
 def main():
-    target_path = ""
-    if not sys.stdin.isatty():
-        try:
-            data = json.load(sys.stdin)
-            tool_input = data.get("tool_input", {}) or {}
-            target_path = tool_input.get("file_path", "") or tool_input.get("path", "")
-        except Exception:
-            pass
-
-    if not target_path and len(sys.argv) > 1:
-        target_path = sys.argv[1]
+    target_path = read_target_path()
 
     rel_path = normalize_rel_path(target_path)
     if not rel_path:
         sys.exit(0)
 
-    # Allow SoloRail state files, Claude settings, and CLAUDE.md
-    if (
-        rel_path.startswith(".solorail/")
-        or rel_path == ".solorail"
-        or rel_path.startswith(".claude/")
-        or rel_path == "CLAUDE.md"
-    ):
+    # Record-keeping paths (SoloRail state, Claude config, .context scratch)
+    # stay writable with no issue IN_PROGRESS and on a protected branch:
+    # ADR-002 protects application code, and a retro is not that.
+    if is_record_keeping_path(rel_path):
         sys.exit(0)
 
     solorail_dir = os.path.join(os.getcwd(), ".solorail")
@@ -124,9 +177,16 @@ def main():
     with open(spec_path, "r", encoding="utf-8") as f:
         spec_content = f.read()
 
-    basename = os.path.basename(rel_path)
-    if rel_path not in spec_content and basename not in spec_content:
-        block(f"SCOPE VIOLATION [SoloRail]: '{rel_path}' is not allowlisted in .solorail/specs/{active_issue}-spec.md.")
+    # Parse the spec's allowlist section rather than substring-matching the
+    # whole file. The old check authorised any filename mentioned anywhere,
+    # including in prose and in the no-go list -- naming a file as forbidden
+    # granted write access to it (E03-ISS-09).
+    allowed, reason = is_allowlisted(rel_path, spec_content)
+    if not allowed:
+        block(
+            f"SCOPE VIOLATION [SoloRail]: '{rel_path}' is not allowlisted in "
+            f".solorail/specs/{active_issue}-spec.md — {reason}"
+        )
 
     sys.exit(0)
 

@@ -10,10 +10,11 @@ between conversation turns, per ADR-003 in .solorail/CONTEXT.md.
 Stdlib only (glob, datetime), no third-party dependencies.
 """
 
-import glob
 import os
 import sys
 from datetime import datetime
+
+from solorail_state import list_sprint_files, resolve_active_sprint
 
 MIN_HOURS = 0.5
 _DATE_FORMATS = ("%Y-%m-%d %H:%M", "%Y-%m-%d")
@@ -34,14 +35,39 @@ def _parse_started_at(raw: str):
 
 
 def _find_started_at(issue_id: str, sprints_dir: str):
-    """Scan the latest sprint-*.md file's table for `issue_id`'s Started At
-    cell. Returns the raw string, or None if the issue or the sprints
-    directory isn't found."""
-    sprint_files = sorted(glob.glob(os.path.join(sprints_dir, "sprint-*.md")))
-    if not sprint_files:
+    """Find `issue_id`'s Started At cell across the sprint boards.
+
+    Searches the ACTIVE sprint first, then every other board. Previously this
+    read only the last filename, so an issue on any other board was invisible
+    and the caller fell back to a default -- silently corrupting the hours
+    ADR-003 makes authoritative. An issue ID is globally unique, so searching
+    every board is safe and finds a carried-over issue too (E03-ISS-02).
+    """
+    search_order = _sprint_search_order(sprints_dir)
+    if not search_order:
         return None
 
-    with open(sprint_files[-1], "r", encoding="utf-8") as f:
+    for sprint_path in search_order:
+        found = _scan_sprint_for_issue(sprint_path, issue_id)
+        if found is not None:
+            return found
+    return None
+
+
+def _sprint_search_order(sprints_dir: str) -> list[str]:
+    """Sprint board paths with the ACTIVE one first."""
+    all_sprints = list_sprint_files(sprints_dir)
+    if not all_sprints:
+        return []
+    active = resolve_active_sprint(sprints_dir)
+    if active and active in all_sprints:
+        return [active] + [p for p in all_sprints if p != active]
+    return all_sprints
+
+
+def _scan_sprint_for_issue(sprint_path: str, issue_id: str):
+    """The Started At cell for `issue_id` on one board, or None."""
+    with open(sprint_path, "r", encoding="utf-8") as f:
         for line in f:
             if "|" not in line:
                 continue

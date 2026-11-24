@@ -1,0 +1,59 @@
+{
+  "issue_id": "E03-ISS-06",
+  "epic_id": "E-03",
+  "title": "Refresh metrics on SessionStart and git-touching Bash commands",
+  "verified_at": "2026-11-25T00:40:00Z",
+  "started_at": "2026-11-25 00:30",
+  "estimated_hours": 1.0,
+  "actual_hours": 0.5,
+  "actual_hours_source": "scripts/compute_actual_hours.py (ADR-003, raw wall-clock, 0.5h floor)",
+  "status": "DONE",
+  "branch": "menilub/solorail-status-v3",
+  "verified_files": [
+    {
+      "path": "scripts/sync_on_git.py",
+      "change": "created",
+      "detail": "Command-gated wrapper. Judges each shell segment so 'cd /x && git merge' matches while 'echo git merge' does not, skips leading env assignments, imports sync_metrics lazily, and always exits 0."
+    },
+    {
+      "path": "hooks/hooks.json",
+      "change": "modified",
+      "detail": "Added a Bash PostToolUse matcher for sync_on_git.py, and sync_metrics.py on SessionStart ordered before session_start.py so the banner reads synced state."
+    },
+    { "path": "scripts/test_sync_on_git.py", "change": "created", "detail": "10 tests across command classification, wrapper behaviour, failure tolerance, and hooks.json shape." }
+  ],
+  "allowlist_respected": true,
+  "no_go_violations": [],
+  "tests": { "total_discovered": 94, "result": "OK", "command": "python3 -m unittest discover -s scripts" },
+  "design_decisions": [
+    {
+      "decision": "A wrapper script rather than a matcher pattern.",
+      "why": "Claude Code hook matchers match the tool name, not its arguments, so 'Bash but only git' is inexpressible in hooks.json. Without the wrapper a full sync would run on every ls, grep and python3 call."
+    },
+    {
+      "decision": "Read-only git is explicitly excluded.",
+      "why": "A sync writes files. Triggering on `git status` or `git diff` would mean inspection mutates the working tree, surprising the user and dirtying diffs mid-review. The exclusion list is tested."
+    },
+    {
+      "decision": "main() catches everything and always exits 0.",
+      "why": "A failing PostToolUse hook breaks the tool call that triggered it. This is an opportunistic refresh, not a gate -- the single biggest risk in the issue."
+    },
+    {
+      "decision": "sync_metrics is imported lazily.",
+      "why": "This hook runs on every Bash call; most do not need the sync machinery loaded."
+    }
+  ],
+  "definition_of_done": [
+    { "criterion": "All tests pass; full suite green", "met": true, "evidence": "94 discovered across 7 suites, OK (was 84)" },
+    { "criterion": "hooks.json valid and declares the new entries in the right order", "met": true, "evidence": "json.load succeeds; test asserts the Bash matcher exists and sync_metrics.py precedes session_start.py under SessionStart" },
+    { "criterion": "A git command corrects a stale fixture; a non-git command leaves it byte-identical", "met": true, "evidence": "Fixture with a 999.0h stale Metrics block corrected to 2.0h/1.5h on 'git merge main'; unchanged on 'ls -la'" },
+    { "criterion": "Exits 0 on malformed stdin and on a raising sync", "met": true, "evidence": "Tested across '', 'not json', '{}', '{\"tool_input\":{}}', 'null', and a patched sync raising RuntimeError; live 'garbage' input also exits 0" },
+    { "criterion": "git status does not trigger a write", "met": true, "evidence": "Live: md5 of sprint-02.md unchanged after a 'git status --short' payload" },
+    { "criterion": "Live repo intact", "met": true, "evidence": "'git merge main' payload synced correctly (Est=12.0h, Act=2.0h, Done=4/8); sprint-01 still reported as frozen" }
+  ],
+  "defects_closed": [
+    "Metrics refreshed only on Edit/Write, so a git merge, PR merge or checkout left every status surface stale -- how this project's own status went stale when PRs #2 and #3 merged outside the workspace",
+    "SessionStart printed the banner from unsynced state"
+  ],
+  "notes": "hooks.json changes take effect in the plugin cache, so they need `/plugin update solorail` (or a reinstall) before the new SessionStart and Bash hooks actually fire for the user. The existing cache-staleness loose end now covers this file too."
+}

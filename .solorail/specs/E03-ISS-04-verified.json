@@ -1,0 +1,59 @@
+{
+  "issue_id": "E03-ISS-04",
+  "epic_id": "E-03",
+  "title": "Add sprints/_TEMPLATE.md and generate the next sprint with carryover",
+  "verified_at": "2026-11-25T00:25:00Z",
+  "started_at": "2026-11-25 00:05",
+  "estimated_hours": 1.5,
+  "actual_hours": 0.5,
+  "actual_hours_source": "scripts/compute_actual_hours.py (ADR-003, raw wall-clock, 0.5h floor)",
+  "status": "DONE",
+  "branch": "menilub/solorail-status-v3",
+  "verified_files": [
+    {
+      "path": ".solorail/sprints/_TEMPLATE.md",
+      "change": "created",
+      "detail": "Canonical board shape with placeholder tokens, shipping with sentinels already in place so a generated board is managed from its first sync and never needs the heading-fallback migration path."
+    },
+    {
+      "path": "scripts/next_sprint.py",
+      "change": "created",
+      "detail": "Generator CLI. Refuses while a sprint is ACTIVE (unless --force) and refuses to overwrite; render_template raises on any leftover {{TOKEN}} so a template/generator mismatch fails loudly rather than writing a half-filled board."
+    },
+    {
+      "path": "scripts/solorail_state.py",
+      "change": "modified",
+      "detail": "Added is_issue_row, carryover_rows, reset_row_for_carryover, is_carryover_row."
+    },
+    {
+      "path": "scripts/sync_metrics.py",
+      "change": "modified",
+      "detail": "Added mid-build (see allowlist_amended): epic totals now dedupe by issue ID with the ACTIVE sprint winning, and the duplicate-ID warning no longer fires for a legitimate carryover."
+    },
+    { "path": "scripts/test_next_sprint.py", "change": "created", "detail": "15 tests including the double-count regression." }
+  ],
+  "allowlist_respected": true,
+  "allowlist_amended": {
+    "file": "scripts/sync_metrics.py",
+    "why": "Originally declared out of scope. That was wrong: the generator is what creates the duplicate-ID condition, so shipping it without the aggregation fix would have shipped a corruption path.",
+    "measured_defect": "A single 10.0h unfinished issue carried once produced 'E-01 | 20.0h' in ROADMAP.md, because epic totals aggregate across every sprint file and a carried issue exists on two boards. It also emitted one false 'Duplicate Issue ID' warning per carried row."
+  },
+  "no_go_violations": [],
+  "tests": { "total_discovered": 84, "result": "OK", "command": "python3 -m unittest discover -s scripts" },
+  "definition_of_done": [
+    { "criterion": "All tests pass; full suite green", "met": true, "evidence": "84 discovered across 6 suites, OK (was 69)" },
+    { "criterion": "A generated board survives a real sync with both metric blocks updated", "met": true, "evidence": "Test runs the real sync() against generated output rather than asserting on strings; totals landed as 2.0h/1.5h and 1/1. This is the check that would have caught hand-authored drift." },
+    { "criterion": "TODO/BLOCKED carry over with Actual/Started At cleared; DONE/CUT stay behind", "met": true, "evidence": "Fixture with all four statuses carried exactly the TODO and BLOCKED rows; Est and Status preserved so a BLOCKED issue stays blocked; note records the origin sprint" },
+    { "criterion": "Generation refuses while a sprint is ACTIVE and refuses to overwrite", "met": true, "evidence": "Live CLI against this repo exited 2 with 'sprint-02.md is still ACTIVE'; overwrite guard covered by a test that forces a colliding number" },
+    { "criterion": "No {{TOKEN}} survives in generated output", "met": true, "evidence": "Regex assertion over generated content; render_template raises ValueError on a leftover token" },
+    { "criterion": "Epic totals count a carried issue once", "met": true, "evidence": "End-to-end fixture: ROADMAP now reads 10.0h where it previously read 20.0h, with no false duplicate warnings; a genuine same-board duplicate still warns" },
+    { "criterion": "Live repo untouched", "met": true, "evidence": "sprint-01.md md5 unchanged, no sprint-03.md created, ROADMAP E-03 reads 12.0h/1.5h as expected" }
+  ],
+  "defects_closed": [
+    "No sprints/_TEMPLATE.md existed; every board was hand-authored, and because all consumers parse by exact marker match, a drifted board is silently un-synced",
+    "Carryover of unfinished rows was prose instruction in the evolve skill, dependent on an agent remembering it",
+    "Epic totals double-counted any issue carried between sprints (10.0h measured as 20.0h)",
+    "One false 'Duplicate Issue ID' warning per carried row; noisy false warnings train people to ignore real ones"
+  ],
+  "notes": "The generator is a CLI and is deliberately NOT yet wired into /solorail:evolve -- that is a plugin-skill prose change, outside this issue's allowlist. Until it is wired in, evolve still asks an agent to author the board, so the drift risk persists in practice even though the tooling to avoid it now exists. Worth its own issue."
+}

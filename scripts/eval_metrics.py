@@ -14,6 +14,8 @@ import re
 import subprocess
 from datetime import datetime
 
+from solorail_state import resolve_active_sprint
+
 
 def run_cmd(cmd: str) -> str:
     try:
@@ -64,12 +66,13 @@ def generate_report():
     sprints_dir = os.path.join(solorail_dir, "sprints")
     roadmap_path = os.path.join(solorail_dir, "ROADMAP.md")
 
-    sprint_files = sorted(glob.glob(os.path.join(sprints_dir, "sprint-*.md")))
-    if not sprint_files:
+    # Telemetry must describe the ACTIVE sprint, not whichever file sorts last
+    # (E03-ISS-02).
+    latest_sprint_file = resolve_active_sprint(sprints_dir)
+    if not latest_sprint_file:
         print("No sprint files found.")
         return
 
-    latest_sprint_file = sprint_files[-1]
     sprint_name = os.path.basename(latest_sprint_file).replace(".md", "")
 
     with open(latest_sprint_file, "r", encoding="utf-8") as f:

@@ -1,0 +1,60 @@
+{
+  "issue_id": "E03-ISS-07",
+  "epic_id": "E-03",
+  "title": "Allow record-keeping writes between issues in enforce_gate.py",
+  "verified_at": "2026-11-25T01:00:00Z",
+  "started_at": "2026-11-25 00:50",
+  "estimated_hours": 1.0,
+  "actual_hours": 0.5,
+  "actual_hours_source": "scripts/compute_actual_hours.py (ADR-003, raw wall-clock, 0.5h floor)",
+  "status": "DONE",
+  "branch": "menilub/solorail-status-v3",
+  "verified_files": [
+    {
+      "path": "scripts/enforce_gate.py",
+      "change": "modified",
+      "detail": "Added is_record_keeping_path (prefix-anchored at directory boundaries, refuses '../') and read_target_path (argv first, stdin never read when argv supplies a path). main() now delegates to both."
+    },
+    { "path": "scripts/test_enforce_gate.py", "change": "modified", "detail": "Grew from 7 to 15 tests covering the exemption set, the rejected blanket *.md, repo-escape refusal, and the stdin hang regression." }
+  ],
+  "allowlist_respected": true,
+  "no_go_violations": [],
+  "tests": { "total_discovered": 102, "result": "OK", "command": "python3 -m unittest discover -s scripts" },
+  "design_decisions": [
+    {
+      "decision": "Exempt .solorail/, .claude/, .context/ and CLAUDE.md -- not a blanket '*.md'.",
+      "why": "A blanket markdown exemption reads as harmless but would unlock README.md, every doc under a source tree, and any .md an issue's spec deliberately left off its allowlist. Documentation is often exactly what an issue is scoped to change, so it must stay gated. Test 2 exists to catch a future broadening."
+    },
+    {
+      "decision": "Record-keeping paths bypass the main/master block too.",
+      "why": "Matches how .solorail/ already behaved. ADR-002 protects application code; a retro or scratch note is not that, and blocking it would make /solorail:evolve unusable on main."
+    },
+    {
+      "decision": "Prefixes matched at directory boundaries, and '../' refused.",
+      "why": "'.contextual/' must not inherit the '.context' exemption, and an absolute path outside the repo (which normalizes to '../..') must never be silently exempt."
+    },
+    {
+      "decision": "argv is read before stdin, and stdin is skipped entirely when argv has a path.",
+      "why": "Reading stdin unconditionally made the gate hang forever when invoked with a path from a context whose stdin was an open pipe -- json.load just waits. This cost a killed 120s command earlier in this epic."
+    }
+  ],
+  "definition_of_done": [
+    { "criterion": "All new tests pass; full suite green", "met": true, "evidence": "102 discovered across 7 suites, OK (was 94)" },
+    { "criterion": "With no issue IN_PROGRESS, .context/ is writable and a non-allowlisted source file is still blocked", "met": true, "evidence": "Live: .context/notes.md and .solorail/retros/x.md exit 0; scripts/eval_metrics.py exits 2" },
+    { "criterion": "enforce_gate.py returns immediately with an open pipe on stdin", "met": true, "evidence": "Three invocations with stdin=/dev/zero each returned in under 0.05s; previously this hung until killed" },
+    { "criterion": "A path outside the repository root is not exempt", "met": true, "evidence": "'../../tmp/x.md', '../outside.md', '../.context/x.md' all False" },
+    { "criterion": "README.md and docs/*.md remain gated", "met": true, "evidence": "is_record_keeping_path returns False for both. NOTE: the end-to-end check on README.md initially returned 0 -- see defect_found_during_verification; it is gated by this function, but a separate pre-existing hole let it through." }
+  ],
+  "defect_found_during_verification": {
+    "what": "enforce_gate.py's allowlist check is a plain substring match against the entire spec file (`rel_path not in spec_content and basename not in spec_content`), so any filename merely MENTIONED in a spec's prose becomes writable.",
+    "how_found": "This spec's own prose argues against a blanket *.md exemption using the words 'would unlock README.md'. That sentence silently allowlisted README.md, and the end-to-end verification of README.md returned exit 0 instead of 2.",
+    "severity": "A spec that discusses a file in prose -- a risk note, a no-go list, a rationale -- grants write access to it. The no-go list is especially perverse: naming a file as forbidden makes it writable.",
+    "status": "Declared as a loose end. The allowlist-matching logic was explicitly in this issue's no-go list, so it needs its own issue with a real allowlist-section parser.",
+    "verification_workaround": "Re-verified using scripts/eval_metrics.py, confirmed absent from this spec, which correctly exits 2."
+  },
+  "defects_closed": [
+    "Between sprints everything outside .solorail/ was read-only, so the post-sprint status review could not be written to .context/ and a /tmp fallback was also refused",
+    "enforce_gate.py hung forever when invoked with a path as argv while stdin was an open non-tty pipe (previously logged as a loose end)"
+  ],
+  "notes": "This issue widens the gate, so every exemption is explicit and tested. The substring-matching hole found during verification is the more serious of the two gate weaknesses now known and should be prioritised over ISS-08."
+}

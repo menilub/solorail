@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """SessionStart status banner for SoloRail v2.7.3."""
 
-import glob
 import os
+
+from solorail_state import resolve_active_sprint
 
 
 def main():
     sprints_dir = os.path.join(os.getcwd(), ".solorail", "sprints")
-    sprint_files = sorted(glob.glob(os.path.join(sprints_dir, "sprint-*.md")))
-    if not sprint_files:
+    # The banner must describe the ACTIVE sprint; selecting the last filename
+    # could report against a CLOSED one (E03-ISS-02).
+    latest = resolve_active_sprint(sprints_dir)
+    if not latest:
         return
 
-    latest = sprint_files[-1]
     in_progress = []
     with open(latest, "r", encoding="utf-8") as f:
         for line in f:

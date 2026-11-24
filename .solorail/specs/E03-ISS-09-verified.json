@@ -1,0 +1,64 @@
+{
+  "issue_id": "E03-ISS-09",
+  "epic_id": "E-03",
+  "title": "Parse a real allowlist section instead of substring-matching the whole spec",
+  "verified_at": "2026-11-25T01:20:00Z",
+  "started_at": "2026-11-25 01:05",
+  "estimated_hours": 1.5,
+  "actual_hours": 0.5,
+  "actual_hours_source": "scripts/compute_actual_hours.py (ADR-003, raw wall-clock, 0.5h floor)",
+  "status": "DONE",
+  "branch": "menilub/solorail-status-v3",
+  "origin": "Found while verifying E03-ISS-07, not planned at sprint start. Added to Sprint 02 as a mid-sprint scope change (+1.5h, 12.0h -> 13.5h).",
+  "verified_files": [
+    {
+      "path": "scripts/spec_allowlist.py",
+      "change": "created",
+      "detail": "find_allowlist_section (level-aware, so a ### amendment subsection stays inside a ## section), parse_allowlist (bullet lines only, first backticked token only), is_allowlisted (exact normalized-path match, returns an actionable reason)."
+    },
+    {
+      "path": "scripts/enforce_gate.py",
+      "change": "modified",
+      "detail": "Scope check now delegates to is_allowlisted instead of substring-matching spec_content; the block message carries the parser's reason."
+    },
+    { "path": "scripts/test_spec_allowlist.py", "change": "created", "detail": "16 tests including one that parses every live spec in .solorail/specs/." },
+    { "path": "scripts/test_enforce_gate.py", "change": "modified", "detail": "Added the prose-mention regression." }
+  ],
+  "allowlist_respected": true,
+  "no_go_violations": [],
+  "tests": { "total_discovered": 119, "result": "OK", "command": "python3 -m unittest discover -s scripts" },
+  "the_bug": {
+    "was": "if rel_path not in spec_content and basename not in spec_content: block(...)",
+    "effect": "Any filename mentioned anywhere in a spec became writable, including in prose and in the no-go list, so naming a file as forbidden granted write access to it. Basename matching additionally authorised any path ending in a mentioned filename, anywhere in the tree.",
+    "discovered_by": "The E03-ISS-07 spec argues against a blanket markdown exemption with the sentence 'would unlock `README.md`'. That sentence authorised README.md, and the end-to-end check returned exit 0 where 2 was required.",
+    "why_it_mattered": "It defeated the gate enforcing every other issue in the epic. Every spec written this session carries a no-go list."
+  },
+  "design_decisions": [
+    {
+      "decision": "Read paths from bullet lines inside the allowlist section only, taking the FIRST backticked token per bullet.",
+      "why": "The remainder of a bullet is description ('- `hooks/hooks.json` *(modify)* — add the `Bash` matcher'), and prose inside the section is still prose."
+    },
+    {
+      "decision": "Section ends at the next heading of the same or shallower level.",
+      "why": "E03-ISS-02 and E03-ISS-04 record mid-build allowlist amendments as ### subsections under a ## heading; ending at any heading would have silently dropped their added files."
+    },
+    {
+      "decision": "Exact match only; basename matching dropped.",
+      "why": "It was half the hole -- a spec naming sync_metrics.py authorised vendor/sync_metrics.py."
+    },
+    {
+      "decision": "Fail closed when a spec has no recognisable allowlist section.",
+      "why": "Falling back to substring matching would preserve the bug. Safe because .solorail/** stays exempt (E03-ISS-07), so the spec itself is always editable, and the block message names the heading to add."
+    }
+  ],
+  "definition_of_done": [
+    { "criterion": "All tests pass; full suite green", "met": true, "evidence": "119 discovered across 8 suites, OK (was 102)" },
+    { "criterion": "A path mentioned only in spec prose is blocked end-to-end", "met": true, "evidence": "Live gate: README.md now exits 2, having exited 0 before this issue" },
+    { "criterion": "A path in the active spec's allowlist is still permitted", "met": true, "evidence": "scripts/spec_allowlist.py and scripts/enforce_gate.py both exit 0" },
+    { "criterion": "Every spec under .solorail/specs/ parses to a non-empty allowlist", "met": true, "evidence": "test_every_live_spec_parses covers all 14 specs, including E02-ISS-01's level-3 '### 2.2 Allowlisted Files' heading and the '## 3. ' numbered variant" },
+    { "criterion": "Basename-only matches rejected", "met": true, "evidence": "vendor/sync_metrics.py rejected against a spec listing scripts/sync_metrics.py" },
+    { "criterion": "A spec with no allowlist section blocks with an actionable message", "met": true, "evidence": "is_allowlisted returns False with a reason naming the heading and bullet format to add" },
+    { "criterion": "No-go entries are no longer authorised", "met": true, "evidence": "Live gate: scripts/sync_metrics.py, scripts/next_sprint.py and hooks/hooks.json -- all named in THIS spec's no-go list -- each exit 2" }
+  ],
+  "notes": "This issue's own no-go list is the demonstration: the three files it forbids are now blocked by the live gate, where the old matcher would have permitted all three. Remaining gate weakness, unaddressed and not currently known to be exploitable: a spec could list a path it has no business touching, which is a review question rather than a code one."
+}

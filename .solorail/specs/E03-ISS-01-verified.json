@@ -1,0 +1,60 @@
+{
+  "issue_id": "E03-ISS-01",
+  "epic_id": "E-03",
+  "title": "Make sync_metrics.py write both metric blocks and splice non-destructively",
+  "verified_at": "2026-11-24T23:15:00Z",
+  "started_at": "2026-11-24 22:35",
+  "estimated_hours": 1.5,
+  "actual_hours": 0.5,
+  "actual_hours_source": "scripts/compute_actual_hours.py (ADR-003, raw wall-clock, 0.5h floor)",
+  "status": "DONE",
+  "branch": "menilub/solorail-status-v3",
+  "reopened": {
+    "reason": "An independent code review falsified the 'never deletes content below the block it rewrites' acceptance criterion, which had already been checked off. The first receipt was withdrawn.",
+    "first_receipt_withdrawn": true,
+    "correctness_findings_fixed": 5,
+    "documentation_findings_fixed": 2,
+    "extra_bug_found_while_fixing": "Repeated syncs appended one blank line per run; caught by the new idempotency test, not by the review."
+  },
+  "verified_files": [
+    {
+      "path": "scripts/sync_metrics.py",
+      "change": "modified",
+      "detail": "Replaced the '## '-heading heuristic with sentinel comments (<!-- solorail:<name>:start/end -->) plus a fence-aware, any-heading-level fallback for migration. Added sentinel_tags, fenced_line_flags, find_block_bounds, wrap_block, is_orphan_sentinel, is_closed_sprint. Split cut vs active actual hours. CLOSED sprints are no longer rewritten."
+    },
+    {
+      "path": "scripts/test_sync_metrics.py",
+      "change": "modified",
+      "detail": "Grew from 7 to 19 tests: one regression per review finding, plus sentinel migration and idempotency coverage. Two original tests had their expectations corrected for the intentional contract change (trailing blank line, new render_metrics_table signature)."
+    }
+  ],
+  "allowlist_respected": true,
+  "no_go_violations": [],
+  "tests": { "total_discovered": 41, "result": "OK", "command": "python3 -m unittest discover -s scripts" },
+  "definition_of_done": [
+    { "criterion": "All tests pass", "met": true, "evidence": "41 tests discovered across 4 suites, OK" },
+    { "criterion": "Existing suites still pass", "met": true, "evidence": "test_enforce_gate, test_check_worktree, test_compute_actual_hours unchanged and green" },
+    { "criterion": "sprint-02 Metrics agrees with the velocity summary", "met": true, "evidence": "12.0h/0.5h and 0/8 in both blocks after live sync" },
+    { "criterion": "Section below the block survives at ANY heading level", "met": true, "evidence": "Fixture with '### Carryover Notes' and '# Appendix' below the summary: both survived a live sync. This is the criterion that failed before." },
+    { "criterion": "Indented or fenced marker mention is not mistaken for the block", "met": true, "evidence": "Fixture with an indented '  ## Metrics' mention and a fenced '## Metrics': mention preserved, exactly one Total Hours row, stale 999.0h replaced, no orphaned fence" },
+    { "criterion": "Each block ends with a blank line", "met": true, "evidence": "Programmatic check: no heading in the output is preceded by a non-blank, non-sentinel line" },
+    { "criterion": "CLOSED sprint left byte-identical", "met": true, "evidence": "md5 of sprint-01.md unchanged across a live sync; sync prints 'skipped sprint-01.md: Status CLOSED (frozen)'" },
+    { "criterion": "Repeated syncs idempotent, no orphaned sentinels", "met": true, "evidence": "Three consecutive live syncs hold sprint-02.md at 38 lines; orphan from the block rename was swept" }
+  ],
+  "defects_closed": [
+    "Boundary scan only matched column-0 '## ', so '### ' and '# ' sections below the block were deleted",
+    "Start scan stripped the line while the boundary scan did not, letting an indented mention match as block start and produce two disagreeing tables",
+    "No fenced-code awareness: a '## ' inside ``` terminated the section and orphaned the fence delimiter",
+    "sync() rewrote CLOSED sprints unconditionally while running as a PostToolUse hook",
+    "render_velocity_summary omitted its trailing blank line, gluing the next heading onto the last bullet",
+    "Total Hours compared active-only Planned against cut-inclusive Actual; Issues Cut Planned was hardcoded to 0",
+    "Repeated syncs accumulated one blank line per run"
+  ],
+  "doc_defects_closed": [
+    "sprint-01-retro.md said E-03 was DRAFT awaiting plan-epic, contradicting ROADMAP.md in the same commit",
+    "The retro rewrite had deleted the only record of why telemetry reports 6/7 architected issues (E01-ISS-04 pivot-added without a spec receipt) and of the E02-ISS-01 worktree root cause; both restored"
+  ],
+  "adrs": ["ADR-004"],
+  "process_note": "The first pass was marked DONE on a self-authored receipt whose central claim was never tested at other heading levels. The test that 'proved' the fix hand-supplied a newline the production renderer did not emit. Independent review caught both.",
+  "notes": "Unblocks E03-ISS-05, which needs a PR section below the summary. E03-ISS-04 (carryover generation) depends on the '###' subsection fix. ADR-004 should be revisited: findings 1-3 trace to the heading heuristic the two-block design required, now replaced by sentinels."
+}

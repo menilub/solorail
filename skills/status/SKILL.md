@@ -24,5 +24,6 @@ allowed-tools: [Read, Glob, Grep, Bash]
    - **PRD Status, Git Branch, Working Tree State, and Worktree Count**
    - **Active Sprint Progress:** Visual bar (`[████░░░░░░] X%`), `Done / Active` issues, `Cut` count, `Actual` vs `Est` hours, and `Capacity`
    - **Active, Blocked & Up Next (`TODO`) Issues**
+   - **Pull Requests:** the active sprint's `## Pull Requests` section, one line per Issue. Run `python3 scripts/pr_state.py refresh` first to update the cached states, then present them as **last-known** (e.g. `#4 — MERGED (last checked just now)`), never as live truth: a stale `OPEN` on a merged PR is worse than showing nothing. If `refresh` reports it could not reach `gh`, say the states are unverified rather than omitting the section.
    - **Roadmap Epics Table**
    - **Recommended Next Action:** Exact `/solorail:<command>` to run next.

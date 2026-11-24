@@ -1,0 +1,61 @@
+{
+  "issue_id": "E03-ISS-05",
+  "epic_id": "E-03",
+  "title": "Record a PR per issue, open it via gh pr create, show live state in status",
+  "verified_at": "2026-11-25T01:55:00Z",
+  "started_at": "2026-11-25 01:30",
+  "estimated_hours": 2.0,
+  "actual_hours": 0.5,
+  "actual_hours_source": "scripts/compute_actual_hours.py (ADR-003, raw wall-clock, 0.5h floor)",
+  "status": "DONE",
+  "branch": "menilub/solorail-status-v3",
+  "verified_files": [
+    {
+      "path": "scripts/pr_state.py",
+      "change": "created",
+      "detail": "normalize_pr_ref, parse_pr_rows, render_pr_table, record_pr, query_pr_state, refresh_pr_states, plus a record/refresh CLI. Every gh call has a 5s timeout and returns None on any failure."
+    },
+    { "path": "scripts/test_pr_state.py", "change": "created", "detail": "18 tests; gh is mocked in all of them." },
+    { "path": ".solorail/sprints/_TEMPLATE.md", "change": "modified", "detail": "Ships an empty sentinel-wrapped Pull Requests block." },
+    { "path": "skills/verify-issue/SKILL.md", "change": "modified", "detail": "Step 5 records the PR it already opens (gh pr create was added by E02-ISS-02)." },
+    { "path": "skills/status/SKILL.md", "change": "modified", "detail": "Displays PR state explicitly as last-known, never as live truth." }
+  ],
+  "allowlist_respected": true,
+  "no_go_violations": [],
+  "tests": { "total_discovered": 137, "result": "OK", "command": "python3 -m unittest discover -s scripts" },
+  "design_decisions": [
+    {
+      "decision": "A managed '## Pull Requests' section, not a table column.",
+      "why": "The issue table is parsed by column index by five consumers, and sync_metrics.split_row discards empty cells, so a blank PR cell would shift every index after it. The section is only viable because E03-ISS-01 stopped the metric splice truncating to EOF."
+    },
+    {
+      "decision": "gh is optional: 5s timeout, None on every failure, cached state preserved.",
+      "why": "gh may be missing, unauthenticated, offline or slow. A missing gh must degrade to 'PR recorded, state unknown', never to a failed verify or a wrong state. All eight failure modes are tested."
+    },
+    {
+      "decision": "Refresh is on demand, never a hook.",
+      "why": "A hook shelling out to gh on every edit would put network latency on the edit path."
+    },
+    {
+      "decision": "Status shows state as last-known.",
+      "why": "A stale OPEN on a merged PR is worse than showing nothing."
+    }
+  ],
+  "definition_of_done": [
+    { "criterion": "All tests pass; full suite green", "met": true, "evidence": "137 discovered across 9 suites, OK (was 119)" },
+    { "criterion": "record_pr then sync() leaves both the PR section and the metric blocks correct", "met": true, "evidence": "Tested, and verified on a copy of the real board: record then two consecutive syncs keep both sentinels, all rows, and correct totals" },
+    { "criterion": "Every gh failure mode yields None and preserves recorded state", "met": true, "evidence": "Eight modes covered: missing binary, non-zero exit, timeout, unparseable JSON, empty output, unrecognised state, missing key, OSError" },
+    { "criterion": "Recording against a CLOSED board is refused", "met": true, "evidence": "RuntimeError raised and the file left byte-identical" },
+    { "criterion": "This session's PR #4 is recorded for the issues it closes and refresh reports its real state", "met": true, "evidence": "All 8 closed E-03 issues recorded against #4; refresh queried the live PR and returned OPEN for each. Committed state verified via git show." },
+    { "criterion": "Skills wired", "met": true, "evidence": "verify-issue step 5 records; status presents last-known state and says so when gh is unreachable" },
+    { "criterion": "A block whose start sentinel was stripped still parses and preserves rows", "met": true, "evidence": "Found during verification; see environmental_finding. Two regression tests added." }
+  ],
+  "environmental_finding": {
+    "what": "The installed plugin cache runs a pre-E03-ISS-01 sync_metrics.py as its PostToolUse Edit|Write hook. That version truncates the sprint board at '## Time & Velocity Summary' to EOF, so a single Edit-tool call deletes the entire Pull Requests section.",
+    "proof": "Recorded the block (start sentinel present), made one unrelated Edit to a spec file, then re-counted: start=0 end=0. The whole block was gone. The repo's own sync_metrics.py preserves it across repeated syncs, confirmed on a copy of the real board.",
+    "consequence": "Until `/plugin update solorail` refreshes the cache, every Edit-tool call in this repo destroys content below the velocity summary. The code is correct; the hook firing is ten commits behind it.",
+    "mitigation_applied": "Recorded the PRs and committed in a single Bash invocation, and wrote this receipt via shell rather than the Edit tool. Committed state verified with `git show HEAD:...`.",
+    "code_hardening": "parse_pr_rows now also enters on the '## Pull Requests' heading, not only the start sentinel. Requiring the sentinel meant a block damaged this way silently lost every recorded row on the next write -- real data loss, found only because the damage happened for real."
+  },
+  "notes": "The epic criterion asked for gh pr create in verify-issue; E02-ISS-02 had already added it, so this issue supplied the missing half -- recording and displaying. The plugin-cache staleness is the highest-value remaining item: it actively destroys sprint-board content on every edit."
+}
