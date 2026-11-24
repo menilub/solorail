@@ -1,0 +1,28 @@
+{
+  "issue_id": "E02-ISS-01",
+  "epic_id": "E-02",
+  "verified_at": "2026-11-24T21:50:00",
+  "status": "DONE",
+  "estimated_hours": 1.0,
+  "actual_hours": 0.5,
+  "test_results": {
+    "suite": "scripts/test_check_worktree.py",
+    "framework": "unittest (stdlib)",
+    "passed": 7,
+    "failed": 0,
+    "errors": 0
+  },
+  "verified_files": [
+    "scripts/check_worktree.py",
+    "scripts/test_check_worktree.py",
+    "skills/architect-issue/SKILL.md",
+    ".solorail/specs/E02-ISS-01-spec.md",
+    ".solorail/sprints/sprint-01.md",
+    ".solorail/epics/epic-02.md",
+    ".solorail/CONTEXT.md"
+  ],
+  "acceptance_criteria_met": [
+    "architect-issue never offers to create a nested Git worktree when the session is already running inside one"
+  ],
+  "notes": "Mid-build correctness fix: initial implementation treated the primary/main checkout as 'inside a worktree' (since git worktree list reports it too), which would have silently disabled the offer everywhere. Corrected to use git rev-parse --git-dir vs --git-common-dir, which distinguishes a linked worktree from the main checkout. Verified live against the main checkout, the Conductor-managed 'vientiane' worktree, and a scratch linked worktree. Unused worktree/branch created during architecture (../wt-E02-ISS-01, feat/E02-ISS-01) were removed since work proceeded directly in the Conductor workspace."
+}

@@ -1,0 +1,34 @@
+{
+  "issue_id": "E02-ISS-03",
+  "epic_id": "E-02",
+  "verified_at": "2026-11-24T22:50:00",
+  "status": "DONE",
+  "estimated_hours": 1.0,
+  "actual_hours": 0.5,
+  "epic_closed": true,
+  "test_results": {
+    "suites": [
+      "scripts/test_check_worktree.py",
+      "scripts/test_enforce_gate.py",
+      "scripts/test_compute_actual_hours.py"
+    ],
+    "framework": "unittest (stdlib)",
+    "passed": 22,
+    "failed": 0,
+    "errors": 0
+  },
+  "verified_files": [
+    "scripts/compute_actual_hours.py",
+    "scripts/test_compute_actual_hours.py",
+    "skills/verify-issue/SKILL.md",
+    ".solorail/specs/E02-ISS-03-spec.md",
+    ".solorail/sprints/sprint-01.md",
+    ".solorail/epics/epic-02.md",
+    ".solorail/ROADMAP.md",
+    ".solorail/CONTEXT.md"
+  ],
+  "acceptance_criteria_met": [
+    "verify-issue computes Actual hours itself from real elapsed time instead of asking the user to self-report"
+  ],
+  "notes": "Actual hours for this issue were computed by its own deliverable (scripts/compute_actual_hours.py E02-ISS-03 -> 0.5), not self-reported -- first issue closed under the new behavior. All 4 Epic E-02 acceptance criteria are now met; Epic marked DONE in epic-02.md and ROADMAP.md. Design choice (raw wall-clock vs. file-mtime-delta) was explicitly confirmed with the user before build; see ADR-003 in CONTEXT.md."
+}

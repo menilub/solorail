@@ -1,14 +1,14 @@
 # Epic E-02: Gate-Enforced Feature Delivery
 
-- **Status:** ACTIVE
+- **Status:** DONE
 - **Goal:** Architect → Build → Verify stages run with a hard-blocking spec gate, deterministic worktree isolation, and reliable TDD enforcement so solo developers can't drift out of scope or skip tests.
 - **Out of Scope:** Re-architecting the gate script itself, multi-worktree orchestration, non-Git VCS support.
 
 ## Acceptance Criteria
-- [ ] `architect-issue` never offers to create a nested Git worktree when the session is already running inside one.
-- [ ] Every issue is developed on its own feature branch — `build-issue`'s branch-check gate hard-blocks (not just warns) edits made directly on `main`/`master`.
-- [ ] `verify-issue` opens a pull request to close out an issue instead of only printing merge instructions.
-- [ ] `verify-issue` computes `Actual` hours itself from real elapsed time instead of asking the user to self-report.
+- [x] `architect-issue` never offers to create a nested Git worktree when the session is already running inside one.
+- [x] Every issue is developed on its own feature branch — `build-issue`'s branch-check gate hard-blocks (not just warns) edits made directly on `main`/`master`.
+- [x] `verify-issue` opens a pull request to close out an issue instead of only printing merge instructions.
+- [x] `verify-issue` computes `Actual` hours itself from real elapsed time instead of asking the user to self-report.
 
 ## Issue Breakdown
 - `E02-ISS-01`: `architect-issue` should check whether the session is already inside a Git worktree before offering/suggesting to create a new nested worktree (Est: 1.0h)
