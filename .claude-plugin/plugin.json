@@ -1,0 +1,5 @@
+{
+  "name": "solorail",
+  "version": "2.7.0",
+  "description": "SoloRail — Strict Git-native Docs-as-Code lifecycle with deterministic metrics, TDD gates, and greenfield/brownfield auto-detection for solo developers."
+}

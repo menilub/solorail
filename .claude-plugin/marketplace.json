@@ -1,0 +1,13 @@
+{
+  "name": "solorail",
+  "owner": {
+    "name": "SoloRail"
+  },
+  "plugins": [
+    {
+      "name": "solorail",
+      "source": "./",
+      "description": "SoloRail — Strict Git-native Docs-as-Code lifecycle with deterministic metrics, TDD gates, and greenfield/brownfield auto-detection."
+    }
+  ]
+}

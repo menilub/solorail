@@ -1,0 +1,34 @@
+{
+  "PreToolUse": [
+    {
+      "matcher": "Edit|Write",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "python3 ${CLAUDE_PLUGIN_ROOT}/scripts/enforce_gate.py"
+        }
+      ]
+    }
+  ],
+  "PostToolUse": [
+    {
+      "matcher": "Edit|Write",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "python3 ${CLAUDE_PLUGIN_ROOT}/scripts/sync_metrics.py"
+        }
+      ]
+    }
+  ],
+  "SessionStart": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash -c 'if ls .solorail/sprints/sprint-*.md >/dev/null 2>&1; then echo "=== SoloRail Active Sprint ==="; grep -E "\| *IN_PROGRESS *\|" .solorail/sprints/sprint-*.md || echo "No issues currently IN_PROGRESS. Run /solorail:next"; fi'"
+        }
+      ]
+    }
+  ]
+}
