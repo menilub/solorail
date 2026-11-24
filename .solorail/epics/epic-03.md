@@ -16,7 +16,7 @@
 - [x] A sprint's `Status:` transitions `ACTIVE` → `CLOSED` automatically, derived from its issue rows plus the retro's existence. *(E03-ISS-03 — one-directional: never auto-reopens)*
 - [x] A template + generator produce the next sprint, carrying over `TODO`/`BLOCKED` rows. *(E03-ISS-04 — `scripts/next_sprint.py`; wiring it into `/solorail:evolve` is a skill-prose change still outstanding)*
 - [ ] Each issue records its PR, `verify-issue`/`evolve` open it via `gh pr create`, and `/solorail:status` shows live open/merged state.
-- [ ] Metrics refresh on `SessionStart` and after git-touching Bash commands, so an externally merged PR is reflected without a manual re-sync.
+- [x] Metrics refresh on `SessionStart` and after git-touching Bash commands, so an externally merged PR is reflected without a manual re-sync. *(E03-ISS-06 — read-only git excluded)*
 - [ ] Record-keeping writes (retros, reviews, `.context/`) are permitted between issues without an `IN_PROGRESS` issue.
 - [ ] The `hotfix` → `pivot` → `evolve` path is verified end-to-end against the new status machinery.
 

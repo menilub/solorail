@@ -13,7 +13,7 @@
 | E03-ISS-03 | E-03 | Derive and write the sprint `Status:` transition automatically | DONE | 1.5h | 0.5h | 2026-11-24 23:45 | Retro-existence interlock; never auto-reopens a CLOSED sprint |
 | E03-ISS-04 | E-03 | Add `sprints/_TEMPLATE.md` and generate the next sprint with carryover | DONE | 1.5h | 0.5h | 2026-11-25 00:05 | Found+fixed epic-total double-count from carryover (10h read as 20h); CLI not yet wired into evolve |
 | E03-ISS-05 | E-03 | Record a PR per issue, open it via `gh pr create`, show live state in status | TODO | 2.0h | - | - | Depends on ISS-01 |
-| E03-ISS-06 | E-03 | Refresh metrics on SessionStart and git-touching Bash commands | TODO | 1.0h | - | - | hooks.json matcher change |
+| E03-ISS-06 | E-03 | Refresh metrics on SessionStart and git-touching Bash commands | DONE | 1.0h | 0.5h | 2026-11-25 00:30 | Wrapper gates on command text; read-only git excluded so inspection never writes |
 | E03-ISS-07 | E-03 | Allow record-keeping writes between issues in `enforce_gate.py` | TODO | 1.0h | - | - | Keeps main/master block (ADR-002) intact |
 | E03-ISS-08 | E-03 | Verify `hotfix` → `pivot` → `evolve` end-to-end against new status machinery | TODO | 2.0h | - | - | Original PRD E-03 scope; build last |
 
@@ -21,9 +21,9 @@
 ## Metrics
 | Metric | Planned | Actual |
 | :--- | :--- | :--- |
-| **Total Hours** | 12.0h | 2.0h |
+| **Total Hours** | 12.0h | 2.5h |
 | **Cut Hours** | 0.0h | 0.0h |
-| **Issues Completed** | 8 | 4 |
+| **Issues Completed** | 8 | 5 |
 | **Issues Cut** | — | 0 |
 <!-- solorail:metrics:end -->
 
@@ -31,8 +31,8 @@
 ## Time & Velocity Summary
 - **Total Estimated (Active):** 12.0h
 - **Total Cut:** 0.0h
-- **Total Actual:** 2.0h
-- **Completed / Total Active Issues:** 4 / 8
+- **Total Actual:** 2.5h
+- **Completed / Total Active Issues:** 5 / 8
 - **Scope Changes (Cut Issues):** 0
 <!-- solorail:velocity-summary:end -->
 

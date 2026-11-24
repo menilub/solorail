@@ -20,11 +20,24 @@
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/sync_metrics.py\""
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/sync_on_git.py\""
+          }
+        ]
       }
     ],
     "SessionStart": [
       {
         "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/sync_metrics.py\""
+          },
           {
             "type": "command",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/session_start.py\""
