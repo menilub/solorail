@@ -12,8 +12,10 @@ import re
 
 from solorail_state import (
     derive_sprint_status,
+    is_carryover_row,
     is_closed_sprint,
     read_sprint_status,
+    resolve_active_sprint,
     retro_path_for,
     write_sprint_status,
 )
@@ -237,11 +239,18 @@ def sync():
     epic_est = {}
     epic_act = {}
     seen_issues = set()
+    # One entry per issue ID, so an issue carried across sprints is counted
+    # once in the ROADMAP epic totals.
+    issue_epic_rows = {}
     valid_statuses = {"TODO", "IN_PROGRESS", "BLOCKED", "DONE", "CUT"}
+    active_sprint_path = resolve_active_sprint(
+        os.path.join(solorail_dir, "sprints")
+    )
 
     for sp_path in sprint_files:
         with open(sp_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
+        is_active_sprint = sp_path == active_sprint_path
 
         _, _, rows = parse_markdown_table(lines, "| ID |")
         total_est_active = 0.0
@@ -253,7 +262,7 @@ def sync():
         active_count = 0
         cut_count = 0
 
-        for _, cells in rows:
+        for row_idx, cells in rows:
             if len(cells) < 6:
                 continue
 
@@ -266,7 +275,13 @@ def sync():
             if issue_id == "-" or not status:
                 continue
 
-            if issue_id in seen_issues:
+            # A carried-over issue legitimately appears on two boards: as a
+            # TODO/BLOCKED row on the sprint it came from, and as a carried row
+            # on its successor. Warning about that is a false positive, and
+            # noisy false warnings train people to ignore real ones.
+            raw_row = lines[row_idx] if row_idx < len(lines) else ""
+            carried = is_carryover_row(raw_row)
+            if issue_id in seen_issues and not carried:
                 print(f"WARNING [SoloRail]: Duplicate Issue ID '{issue_id}' found in {os.path.basename(sp_path)}")
             seen_issues.add(issue_id)
 
@@ -286,10 +301,24 @@ def sync():
                 active_count += 1
                 if status == "DONE":
                     done_count += 1
-                epic_est[epic_id] = epic_est.get(epic_id, 0.0) + est
 
             total_actual += act
-            epic_act[epic_id] = epic_act.get(epic_id, 0.0) + act
+
+            # Per-sprint totals above count every row on this board -- a
+            # carried row genuinely is part of this sprint's planned work.
+            # Epic totals must NOT: an issue carried forward appears on two
+            # boards, which measurably doubled a 10.0h issue to 20.0h in
+            # ROADMAP.md. Keep one entry per issue ID, preferring the ACTIVE
+            # sprint's row since that is the live one.
+            existing = issue_epic_rows.get(issue_id)
+            if existing is None or (is_active_sprint and not existing["from_active"]):
+                issue_epic_rows[issue_id] = {
+                    "epic_id": epic_id,
+                    "status": status,
+                    "est": est,
+                    "act": act,
+                    "from_active": is_active_sprint,
+                }
 
         # Derive the sprint's own Status before the freeze check, so a sprint
         # that just became closeable gets its header written once and is frozen
@@ -348,6 +377,15 @@ def sync():
         with open(sp_path, "w", encoding="utf-8") as f:
             f.writelines(lines)
         print(f"SoloRail synced {os.path.basename(sp_path)}: Est={total_est_active:.1f}h, Act={total_actual:.1f}h, Done={done_count}/{active_count}")
+
+    # Aggregate epic totals from the deduped per-issue map, not inline during
+    # the row scan, so each issue contributes exactly once no matter how many
+    # boards carry it.
+    for row in issue_epic_rows.values():
+        epic_id = row["epic_id"]
+        if row["status"] != "CUT":
+            epic_est[epic_id] = epic_est.get(epic_id, 0.0) + row["est"]
+        epic_act[epic_id] = epic_act.get(epic_id, 0.0) + row["act"]
 
     if os.path.exists(roadmap_path):
         with open(roadmap_path, "r", encoding="utf-8") as f:

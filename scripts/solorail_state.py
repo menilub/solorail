@@ -100,6 +100,74 @@ def issue_statuses(lines: list[str]) -> list[str]:
     return statuses
 
 
+CARRYOVER_STATUSES = {"TODO", "BLOCKED"}
+
+
+def is_issue_row(line: str) -> bool:
+    """True for a real issue row, excluding the header and separator rows."""
+    if "|" not in line:
+        return False
+    cells = [c.strip() for c in line.split("|")]
+    if len(cells) < 6:
+        return False
+    issue_id = cells[1]
+    if issue_id in ("ID", "", "-") or set(issue_id) <= set(":- "):
+        return False
+    return cells[4].upper() in (OPEN_STATUSES | CLOSEABLE_STATUSES)
+
+
+def carryover_rows(lines: list[str]) -> list[str]:
+    """Issue rows whose Status is TODO or BLOCKED, verbatim, in board order.
+
+    These are the rows an unfinished sprint hands to its successor. DONE and
+    CUT rows stay behind as that sprint's own history.
+    """
+    return [
+        line for line in lines
+        if is_issue_row(line) and line.split("|")[4].strip().upper() in CARRYOVER_STATUSES
+    ]
+
+
+def reset_row_for_carryover(row: str, origin: str = "") -> str:
+    """A carried row with Actual and Started At cleared and a note recording
+    where it came from.
+
+    Est and Status are preserved deliberately: a BLOCKED issue is still
+    blocked after the sprint boundary, and re-estimating is a planning
+    decision, not a side effect of carryover.
+    """
+    cells = row.rstrip("\n").split("|")
+    if len(cells) < 9:
+        return row
+
+    cells[6] = " - "   # Actual
+    cells[7] = " - "   # Started At
+
+    note = cells[8].strip()
+    origin_note = f"carried over from {origin}" if origin else "carried over"
+    if note and note != "-":
+        cells[8] = f" {note}; {origin_note} "
+    else:
+        cells[8] = f" {origin_note} "
+
+    return "|".join(cells) + "\n"
+
+
+CARRYOVER_MARKER = "carried over"
+
+
+def is_carryover_row(row: str) -> bool:
+    """True when an issue row was carried forward from an earlier sprint.
+
+    Lets epic aggregation tell a legitimate carryover (the same issue
+    continuing on a new board) from a genuinely duplicated ID.
+    """
+    cells = row.split("|")
+    if len(cells) < 9:
+        return False
+    return CARRYOVER_MARKER in cells[8].lower()
+
+
 def retro_path_for(sprint_path: str) -> str:
     """The retro path matching a sprint board.
 

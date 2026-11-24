@@ -14,7 +14,7 @@
 - [x] `sync_metrics.py` never deletes content below the block it rewrites — verified at `##`, `###` and `#` levels, with indented and fenced marker mentions, and on CLOSED sprints. *(E03-ISS-01, after a reopen: this was prematurely checked off once and falsified by code review.)*
 - [x] Every script resolves the sprint by `Status: ACTIVE`, not by filename order. *(E03-ISS-02 — 4 call sites unified behind `solorail_state.resolve_active_sprint`)*
 - [x] A sprint's `Status:` transitions `ACTIVE` → `CLOSED` automatically, derived from its issue rows plus the retro's existence. *(E03-ISS-03 — one-directional: never auto-reopens)*
-- [ ] `/solorail:evolve` generates the next sprint from a template, carrying over `TODO`/`BLOCKED` rows.
+- [x] A template + generator produce the next sprint, carrying over `TODO`/`BLOCKED` rows. *(E03-ISS-04 — `scripts/next_sprint.py`; wiring it into `/solorail:evolve` is a skill-prose change still outstanding)*
 - [ ] Each issue records its PR, `verify-issue`/`evolve` open it via `gh pr create`, and `/solorail:status` shows live open/merged state.
 - [ ] Metrics refresh on `SessionStart` and after git-touching Bash commands, so an externally merged PR is reflected without a manual re-sync.
 - [ ] Record-keeping writes (retros, reviews, `.context/`) are permitted between issues without an `IN_PROGRESS` issue.
