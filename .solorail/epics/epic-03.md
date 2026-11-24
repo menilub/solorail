@@ -10,8 +10,8 @@
   - CI/CD or auto-merge of the PRs this epic opens.
 
 ## Acceptance Criteria
-- [ ] No number in any `.solorail/sprints/sprint-*.md` is hand-authored; every metric block is script-written and the two blocks always agree.
-- [ ] `sync_metrics.py` never deletes content below the block it rewrites.
+- [x] No number in any `.solorail/sprints/sprint-*.md` is hand-authored; every metric block is script-written and the two blocks always agree. *(E03-ISS-01)*
+- [x] `sync_metrics.py` never deletes content below the block it rewrites. *(E03-ISS-01)*
 - [ ] Every script resolves the sprint by `Status: ACTIVE`, not by filename order.
 - [ ] A sprint's `Status:` transitions `ACTIVE` → `CLOSED` automatically, derived from its issue rows plus the retro's existence.
 - [ ] `/solorail:evolve` generates the next sprint from a template, carrying over `TODO`/`BLOCKED` rows.

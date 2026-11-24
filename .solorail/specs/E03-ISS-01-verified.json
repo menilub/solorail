@@ -1,0 +1,61 @@
+{
+  "issue_id": "E03-ISS-01",
+  "epic_id": "E-03",
+  "title": "Make sync_metrics.py write both metric blocks and splice non-destructively",
+  "verified_at": "2026-11-24T22:50:00Z",
+  "started_at": "2026-11-24 22:35",
+  "estimated_hours": 1.5,
+  "actual_hours": 0.5,
+  "actual_hours_source": "scripts/compute_actual_hours.py (ADR-003, raw wall-clock, 0.5h floor)",
+  "status": "DONE",
+  "branch": "menilub/solorail-status-v3",
+  "commit": "35a59d6",
+  "verified_files": [
+    {
+      "path": "scripts/sync_metrics.py",
+      "change": "modified",
+      "detail": "Added replace_block, render_metrics_table, render_velocity_summary; rewired sync() to write both blocks from one set of totals. Removed the EOF-truncating slice at former line 128."
+    },
+    {
+      "path": "scripts/test_sync_metrics.py",
+      "change": "created",
+      "detail": "7 stdlib unittest cases against temp-directory fixtures."
+    }
+  ],
+  "allowlist_respected": true,
+  "no_go_violations": [],
+  "tests": {
+    "test_sync_metrics.py": { "ran": 7, "result": "OK" },
+    "test_enforce_gate.py": { "result": "OK" },
+    "test_check_worktree.py": { "result": "OK" },
+    "test_compute_actual_hours.py": { "result": "OK" }
+  },
+  "definition_of_done": [
+    {
+      "criterion": "All 5 spec'd tests pass via python3 scripts/test_sync_metrics.py",
+      "met": true,
+      "evidence": "Ran 7 tests (5 spec'd + 2 format guards), OK"
+    },
+    {
+      "criterion": "Existing suites still pass",
+      "met": true,
+      "evidence": "test_enforce_gate, test_check_worktree, test_compute_actual_hours all OK"
+    },
+    {
+      "criterion": "sprint-02 ## Metrics reads 12.0h / 0.0h, 8 / 0, 0 / 0",
+      "met": true,
+      "evidence": "Verified after live sync_metrics.py run; sprint-01 also corrected from stale 6.5h/0.0h/0 to 9.0h/4.5h/7"
+    },
+    {
+      "criterion": "A section below ## Time & Velocity Summary survives a sync",
+      "met": true,
+      "evidence": "Live proof: appended a ## Pull Requests section to sprint-02.md, ran sync_metrics.py, row survived; file then restored from backup"
+    }
+  ],
+  "defects_closed": [
+    "sync_metrics.py:128 sliced to EOF, silently deleting all content below the summary marker",
+    "## Metrics table had no writer and drifted out of agreement with the velocity summary"
+  ],
+  "adrs": ["ADR-004"],
+  "notes": "Summary block output kept byte-identical so eval_metrics.py and the status skill keep parsing it. Unblocks E03-ISS-05, which needs a PR section below the summary."
+}
