@@ -1,13 +1,13 @@
 # Epic E-01: Repository Onboarding & Capacity-Checked Planning — Visual Guide
 
-- **Status:** ACTIVE
+- **Status:** DONE
 - **Goal:** A new or returning solo developer can see, in one glance, how the SoloRail lifecycle (Discover → Plan → Architect → Build → Verify → Evolve) and its 12 `/solorail:*` commands fit together — in both the public README (GitHub-rendered) and a deeper in-repo guide.
 - **Out of Scope:** Interactive/HTML diagrams, video walkthroughs, re-architecting the existing init/discover-prd/plan-epic skills (already shipped in v2.7.3).
 
 ## Acceptance Criteria
-- [ ] README.md contains a Mermaid flowchart showing all 6 lifecycle stages and all 12 `/solorail:*` commands, including hotfix/pivot/block side branches, and renders correctly on GitHub.
-- [ ] `.solorail/GUIDE.md` exists with the same diagram plus a command-by-command walkthrough (what each command reads, writes, and hands off to).
-- [ ] The guide is discoverable: linked from `CLAUDE.md` and referenced in `/solorail:init`'s completion message.
+- [x] README.md contains a Mermaid flowchart showing all 6 lifecycle stages and all 12 `/solorail:*` commands, including hotfix/pivot/block side branches, and renders correctly on GitHub.
+- [x] `.solorail/GUIDE.md` exists with the same diagram plus a command-by-command walkthrough (what each command reads, writes, and hands off to).
+- [x] The guide is discoverable: linked from `CLAUDE.md` and referenced in `/solorail:init`'s completion message.
 
 ## Issue Breakdown
 - `E01-ISS-01`: Add Mermaid lifecycle + command flowchart to README.md (Est: 1.5h)

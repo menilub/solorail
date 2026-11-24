@@ -1,0 +1,18 @@
+{
+  "issue_id": "E01-ISS-01",
+  "verified_at": "2026-11-24T15:30:00Z",
+  "status": "DONE",
+  "estimated_hours": 1.5,
+  "actual_hours": 1.0,
+  "verified_files": [
+    "README.md"
+  ],
+  "acceptance_criteria_met": [
+    "README.md contains a mermaid fenced flowchart",
+    "Diagram shows all 6 lifecycle stages (Discover, Plan, Architect, Build, Verify, Evolve)",
+    "Diagram shows all 12 /solorail:* commands",
+    "hotfix, pivot, block drawn as side branches off the main pipeline",
+    "No existing README sections altered"
+  ],
+  "test_method": "manual inspection + grep (documentation-only issue, no executable logic)"
+}

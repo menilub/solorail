@@ -8,21 +8,24 @@
 ## Planned Issues
 | ID | Epic | Issue | Status | Est | Actual | Started At | Notes |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| E01-ISS-01 | E-01 | Add Mermaid lifecycle + command flowchart to README.md | TODO | 1.5h | 0.0h | - | - |
-| E01-ISS-02 | E-01 | Create `.solorail/GUIDE.md` with command-by-command walkthrough + diagram | TODO | 2.5h | 0.0h | - | - |
-| E01-ISS-03 | E-01 | Link GUIDE.md from CLAUDE.md and init completion output | TODO | 1.0h | 0.0h | - | - |
+| E01-ISS-01 | E-01 | Add Mermaid lifecycle + command flowchart to README.md | DONE | 1.5h | 1.0h | 2026-11-24 15:00 | - |
+| E01-ISS-02 | E-01 | Create `.solorail/GUIDE.md` with command-by-command walkthrough + diagram | DONE | 2.5h | 0.5h | 2026-11-24 15:45 | Actual = measured file-mtime delta (spec→GUIDE.md), floored to 0.5h min |
+| E01-ISS-03 | E-01 | Link GUIDE.md from CLAUDE.md and init completion output | DONE | 1.0h | 0.5h | 2026-11-24 14:30 | Actual = measured file-mtime delta, floored to 0.5h min |
 | E01-ISS-04 | E-01 | Rebase plugin version to 0.4.0-beta (plugin.json, marketplace.json, README.md) | DONE | 0.5h | 0.5h | 2026-11-24 | Pivot: version restart |
+| E02-ISS-01 | E-02 | Check for existing worktree before offering to create one in architect-issue | TODO | 1.0h | 0.0h | - | Pivot: discovered during E01-ISS-01 |
+| E02-ISS-02 | E-02 | Require feature branch + PR per issue; hard-block main/master in build-issue gate | TODO | 1.5h | 0.0h | - | Pivot: never work on main |
+| E02-ISS-03 | E-02 | verify-issue should compute Actual hours itself from elapsed time, not ask the user | TODO | 1.0h | 0.0h | - | Pivot: discovered during E01-ISS-02 verify |
 
 ## Metrics
 | Metric | Planned | Actual |
 | :--- | :--- | :--- |
-| **Total Hours** | 5.5h | 0.0h |
+| **Total Hours** | 6.5h | 0.0h |
 | **Issues Completed** | 0 | 0 |
 | **Issues Cut** | 0 | 0 |
 
 ## Time & Velocity Summary
-- **Total Estimated (Active):** 5.5h
+- **Total Estimated (Active):** 9.0h
 - **Total Cut:** 0.0h
-- **Total Actual:** 0.5h
-- **Completed / Total Active Issues:** 1 / 4
+- **Total Actual:** 2.5h
+- **Completed / Total Active Issues:** 4 / 7
 - **Scope Changes (Cut Issues):** 0
