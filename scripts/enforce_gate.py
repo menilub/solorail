@@ -8,11 +8,12 @@ Physically blocks Claude Code from editing application code outside the active w
 4. Requires the target file to be explicitly listed in that spec receipt.
 """
 
-import glob
 import json
 import os
 import subprocess
 import sys
+
+from solorail_state import resolve_active_sprint
 
 
 def get_current_branch(cwd: str = None) -> str:
@@ -41,10 +42,13 @@ def is_protected_branch(branch: str) -> bool:
 
 
 def get_active_issue(sprints_dir: str):
-    sprint_files = sorted(glob.glob(os.path.join(sprints_dir, "sprint-*.md")))
-    if not sprint_files:
+    # Resolve by declared Status, not by filename order: selecting the last
+    # filename meant the gate stopped enforcing an IN_PROGRESS issue as soon
+    # as a newer sprint file existed (E03-ISS-02).
+    sprint_path = resolve_active_sprint(sprints_dir)
+    if not sprint_path:
         return None
-    with open(sprint_files[-1], "r", encoding="utf-8") as f:
+    with open(sprint_path, "r", encoding="utf-8") as f:
         for line in f:
             if "|" not in line:
                 continue

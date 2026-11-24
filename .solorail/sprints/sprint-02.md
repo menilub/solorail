@@ -9,7 +9,7 @@
 | ID | Epic | Issue | Status | Est | Actual | Started At | Notes |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | E03-ISS-01 | E-03 | Make `sync_metrics.py` write both metric blocks and splice non-destructively | DONE | 1.5h | 0.5h | 2026-11-24 22:35 | Reopened after code review falsified an AC; sentinel-based rewrite, 5 correctness + 2 doc findings fixed, 19 tests |
-| E03-ISS-02 | E-03 | Resolve the ACTIVE sprint by status, not `sprint_files[-1]`, across all scripts | TODO | 1.5h | - | - | Affects enforce_gate.py, session_start.py, sync_metrics.py |
+| E03-ISS-02 | E-03 | Resolve the ACTIVE sprint by status, not `sprint_files[-1]`, across all scripts | DONE | 1.5h | 0.5h | 2026-11-24 23:20 | 4 sites (a 4th found mid-build by the DoD grep); shared solorail_state.py, 17 tests |
 | E03-ISS-03 | E-03 | Derive and write the sprint `Status:` transition automatically | TODO | 1.5h | - | - | Depends on ISS-02 |
 | E03-ISS-04 | E-03 | Add `sprints/_TEMPLATE.md` and generate the next sprint with carryover | TODO | 1.5h | - | - | Depends on ISS-03 |
 | E03-ISS-05 | E-03 | Record a PR per issue, open it via `gh pr create`, show live state in status | TODO | 2.0h | - | - | Depends on ISS-01 |
@@ -21,9 +21,9 @@
 ## Metrics
 | Metric | Planned | Actual |
 | :--- | :--- | :--- |
-| **Total Hours** | 12.0h | 0.5h |
+| **Total Hours** | 12.0h | 1.0h |
 | **Cut Hours** | 0.0h | 0.0h |
-| **Issues Completed** | 8 | 1 |
+| **Issues Completed** | 8 | 2 |
 | **Issues Cut** | — | 0 |
 <!-- solorail:metrics:end -->
 
@@ -31,8 +31,8 @@
 ## Time & Velocity Summary
 - **Total Estimated (Active):** 12.0h
 - **Total Cut:** 0.0h
-- **Total Actual:** 0.5h
-- **Completed / Total Active Issues:** 1 / 8
+- **Total Actual:** 1.0h
+- **Completed / Total Active Issues:** 2 / 8
 - **Scope Changes (Cut Issues):** 0
 <!-- solorail:velocity-summary:end -->
 

@@ -10,6 +10,8 @@ import glob
 import os
 import re
 
+from solorail_state import is_closed_sprint
+
 
 def parse_hours(val: str) -> float:
     cleaned = val.strip().lower().rstrip("h").strip()
@@ -216,22 +218,6 @@ def render_velocity_summary(total_est: float, total_cut: float,
         f"- **Completed / Total Active Issues:** {done_count} / {active_count}\n",
         f"- **Scope Changes (Cut Issues):** {cut_count}\n",
     ]
-
-
-def is_closed_sprint(lines: list[str]) -> bool:
-    """True when the sprint header declares 'Status: CLOSED'.
-
-    Only the header block is consulted, so an issue row mentioning the word
-    cannot flip the whole board to frozen.
-    """
-    for line in lines:
-        if HEADING_RE.match(line) and not line.startswith("# "):
-            break
-        if line.lstrip().startswith("|"):
-            break
-        if "status:" in line.lower() and "closed" in line.lower():
-            return True
-    return False
 
 
 def sync():

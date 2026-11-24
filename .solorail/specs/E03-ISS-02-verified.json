@@ -1,0 +1,49 @@
+{
+  "issue_id": "E03-ISS-02",
+  "epic_id": "E-03",
+  "title": "Resolve the ACTIVE sprint by status, not sprint_files[-1], across all scripts",
+  "verified_at": "2026-11-24T23:40:00Z",
+  "started_at": "2026-11-24 23:20",
+  "estimated_hours": 1.5,
+  "actual_hours": 0.5,
+  "actual_hours_source": "scripts/compute_actual_hours.py (ADR-003, raw wall-clock, 0.5h floor)",
+  "status": "DONE",
+  "branch": "menilub/solorail-status-v3",
+  "verified_files": [
+    {
+      "path": "scripts/solorail_state.py",
+      "change": "created",
+      "detail": "Shared resolver: sprint_number, list_sprint_files, read_sprint_status, read_sprint_status_file, is_closed_sprint, resolve_active_sprint. Stdlib-only, no import-time side effects (it loads inside PreToolUse/SessionStart hooks)."
+    },
+    { "path": "scripts/test_solorail_state.py", "change": "created", "detail": "17 tests including the gate-bug and compute-hours integration scenarios." },
+    { "path": "scripts/enforce_gate.py", "change": "modified", "detail": "get_active_issue resolves by Status; allowlist model, main/master block (ADR-002) and fail-open paths untouched." },
+    { "path": "scripts/session_start.py", "change": "modified", "detail": "Banner reads the ACTIVE sprint." },
+    { "path": "scripts/eval_metrics.py", "change": "modified", "detail": "Telemetry targets the ACTIVE sprint." },
+    { "path": "scripts/sync_metrics.py", "change": "modified", "detail": "Duplicate is_closed_sprint removed; delegates to the shared module." },
+    { "path": "scripts/compute_actual_hours.py", "change": "modified", "detail": "Fourth defect site, added to the allowlist mid-build. Now searches the ACTIVE board first then every other board, since an issue ID is globally unique and may be carried over." }
+  ],
+  "allowlist_respected": true,
+  "allowlist_amended": {
+    "file": "scripts/compute_actual_hours.py",
+    "why": "Carries the identical sprint_files[-1] defect but was missed when the spec was written; the problem statement named only three sites. Caught by the spec's own DoD grep, not by inspection. Spec amended before editing rather than editing outside the allowlist."
+  },
+  "no_go_violations": [],
+  "tests": { "total_discovered": 56, "result": "OK", "command": "python3 -m unittest discover -s scripts" },
+  "definition_of_done": [
+    { "criterion": "All tests pass", "met": true, "evidence": "56 discovered across 5 suites, OK" },
+    { "criterion": "No caller selects by last filename", "met": true, "evidence": "All 5 callers import from solorail_state; grep clean in each. The single remaining sprint_files[-1] is the resolver's documented rule-3 fallback on a numerically-ordered list." },
+    { "criterion": "Gate enforces an IN_PROGRESS issue in an ACTIVE sprint-01 while a CLOSED sprint-02 exists", "met": true, "evidence": "Live fixture: get_active_issue returned E01-ISS-09 from the ACTIVE older board. This is the scenario that failed before." },
+    { "criterion": "No duplicate is_closed_sprint", "met": true, "evidence": "0 definitions in sync_metrics.py, 1 in solorail_state.py" },
+    { "criterion": "Live gate still blocks and permits correctly", "met": true, "evidence": "scripts/solorail_state.py -> exit 0; README.md -> exit 2 with SCOPE VIOLATION" },
+    { "criterion": "Session banner reports the active sprint", "met": true, "evidence": "Prints sprint-02.md with E03-ISS-02 IN_PROGRESS" }
+  ],
+  "defects_closed": [
+    "enforce_gate.py:44 selected the last filename, so the gate silently stopped enforcing an IN_PROGRESS issue once a newer sprint file existed",
+    "session_start.py:10 could report the banner against a CLOSED sprint",
+    "eval_metrics.py:67 could generate telemetry for the wrong sprint",
+    "compute_actual_hours.py:40 could miss an issue entirely and fall back to a default, corrupting the hours ADR-003 makes authoritative",
+    "Plain string sort put sprint-10.md before sprint-9.md; ordering is now numeric",
+    "is_closed_sprint was duplicated between sync_metrics.py and the status-reading logic"
+  ],
+  "notes": "Unblocks E03-ISS-03 (status writer) and E03-ISS-04 (next-sprint generation), which both need reliable active-sprint resolution. resolve_active_sprint deliberately falls back to the highest-numbered board rather than returning None when no sprint is ACTIVE, so the gate does not begin failing open the moment every sprint is closed."
+}
