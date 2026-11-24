@@ -14,6 +14,7 @@ import subprocess
 import sys
 
 from solorail_state import resolve_active_sprint
+from spec_allowlist import is_allowlisted
 
 
 def get_current_branch(cwd: str = None) -> str:
@@ -176,9 +177,16 @@ def main():
     with open(spec_path, "r", encoding="utf-8") as f:
         spec_content = f.read()
 
-    basename = os.path.basename(rel_path)
-    if rel_path not in spec_content and basename not in spec_content:
-        block(f"SCOPE VIOLATION [SoloRail]: '{rel_path}' is not allowlisted in .solorail/specs/{active_issue}-spec.md.")
+    # Parse the spec's allowlist section rather than substring-matching the
+    # whole file. The old check authorised any filename mentioned anywhere,
+    # including in prose and in the no-go list -- naming a file as forbidden
+    # granted write access to it (E03-ISS-09).
+    allowed, reason = is_allowlisted(rel_path, spec_content)
+    if not allowed:
+        block(
+            f"SCOPE VIOLATION [SoloRail]: '{rel_path}' is not allowlisted in "
+            f".solorail/specs/{active_issue}-spec.md — {reason}"
+        )
 
     sys.exit(0)
 

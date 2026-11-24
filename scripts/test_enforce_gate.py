@@ -158,5 +158,38 @@ class ReadTargetPathTests(unittest.TestCase):
                     self.assertEqual(read_target_path(["prog"]), "")
 
 
+class ProseMentionBypassTests(unittest.TestCase):
+    """E03-ISS-09 regression: a filename mentioned only in spec prose must not
+    be writable. The E03-ISS-07 spec's sentence 'would unlock `README.md`'
+    previously authorised README.md."""
+
+    SPEC = """# Spec
+
+## Problem
+
+A blanket exemption would unlock `README.md`, which we do not want.
+
+## Allowlisted Files to Create/Modify
+
+- `scripts/target.py` *(modify)*
+
+## No-Go Constraints
+
+- `scripts/forbidden.py`
+"""
+
+    def test_prose_mention_blocked_and_allowlist_permitted(self):
+        from spec_allowlist import is_allowlisted as check
+
+        allowed, reason = check("README.md", self.SPEC)
+        self.assertFalse(allowed, f"prose mention must not authorise: {reason}")
+
+        allowed, _ = check("scripts/forbidden.py", self.SPEC)
+        self.assertFalse(allowed, "a no-go entry must not authorise")
+
+        allowed, _ = check("scripts/target.py", self.SPEC)
+        self.assertTrue(allowed)
+
+
 if __name__ == "__main__":
     unittest.main()

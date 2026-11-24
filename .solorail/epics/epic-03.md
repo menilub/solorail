@@ -29,8 +29,9 @@
 - `E03-ISS-06`: Refresh metrics on SessionStart and git-touching Bash commands (Est: 1.0h)
 - `E03-ISS-07`: Allow record-keeping writes between issues in `enforce_gate.py` (Est: 1.0h)
 - `E03-ISS-08`: Verify `hotfix` → `pivot` → `evolve` end-to-end against the new status machinery (Est: 2.0h)
+- `E03-ISS-09`: Parse a real allowlist section instead of substring-matching the whole spec (Est: 1.5h)
 
-**Total: 12.0h** (Sprint 02 capacity 20.0h)
+**Total: 13.5h** (Sprint 02 capacity 20.0h)
 
 ### Sequencing notes
 - `ISS-01` and `ISS-02` are foundational — both fix live data-loss/targeting bugs and everything below reads the state they repair. Build them first, in that order.
@@ -58,4 +59,5 @@
 | 2026-11-24 | Initial Epic created | Baseline scope per PRD Section 5 (`hotfix` / `pivot` → `evolve`) | Drafted, unscheduled |
 | 2026-11-24 | Merged deterministic status/progress sync into E-03 scope | Post-Sprint-01 review found 7 causes of stale status; the Day-2 commands depend on correct status plumbing, so splitting them into a separate epic would have ordered the work wrongly. User chose "merge both into E-03". | +12.0h added to Sprint 02 |
 | 2026-11-24 | Truncation and `sprint_files[-1]` defects planned as issues rather than hotfixes | User chose planned issues over `/solorail:hotfix`; they are architectural, not isolated regressions. | Folded into `ISS-01`/`ISS-02` |
+| 2026-11-25 | Added `E03-ISS-09` after verifying `E03-ISS-07` exposed a gate bypass: the allowlist check substring-matches the whole spec file, so any filename mentioned in prose — including in a no-go list — becomes writable. | Defeats the gate enforcing every other issue. | +1.5h to Sprint 02 |
 | 2026-11-24 | Both metric blocks retained and synced | User chose "keep both, synced" over deleting either — nothing is removed from existing sprint files. | Scope of `ISS-01` |

@@ -16,23 +16,24 @@
 | E03-ISS-06 | E-03 | Refresh metrics on SessionStart and git-touching Bash commands | DONE | 1.0h | 0.5h | 2026-11-25 00:30 | Wrapper gates on command text; read-only git excluded so inspection never writes |
 | E03-ISS-07 | E-03 | Allow record-keeping writes between issues in `enforce_gate.py` | DONE | 1.0h | 0.5h | 2026-11-25 00:50 | Also fixed the argv+stdin hang. Found a worse gate hole: spec substring matching (see receipt) |
 | E03-ISS-08 | E-03 | Verify `hotfix` → `pivot` → `evolve` end-to-end against new status machinery | TODO | 2.0h | - | - | Original PRD E-03 scope; build last |
+| E03-ISS-09 | E-03 | Parse a real allowlist section instead of substring-matching the whole spec | DONE | 1.5h | 0.5h | 2026-11-25 01:05 | Mid-sprint addition. No-go lists now block instead of authorising |
 
 <!-- solorail:metrics:start -->
 ## Metrics
 | Metric | Planned | Actual |
 | :--- | :--- | :--- |
-| **Total Hours** | 12.0h | 3.0h |
+| **Total Hours** | 13.5h | 3.5h |
 | **Cut Hours** | 0.0h | 0.0h |
-| **Issues Completed** | 8 | 6 |
+| **Issues Completed** | 9 | 7 |
 | **Issues Cut** | — | 0 |
 <!-- solorail:metrics:end -->
 
 <!-- solorail:velocity-summary:start -->
 ## Time & Velocity Summary
-- **Total Estimated (Active):** 12.0h
+- **Total Estimated (Active):** 13.5h
 - **Total Cut:** 0.0h
-- **Total Actual:** 3.0h
-- **Completed / Total Active Issues:** 6 / 8
+- **Total Actual:** 3.5h
+- **Completed / Total Active Issues:** 7 / 9
 - **Scope Changes (Cut Issues):** 0
 <!-- solorail:velocity-summary:end -->
 
