@@ -59,6 +59,67 @@ def get_active_issue(sprints_dir: str):
     return None
 
 
+RECORD_KEEPING_PREFIXES = (".solorail", ".claude", ".context")
+RECORD_KEEPING_FILES = ("CLAUDE.md",)
+
+
+def is_record_keeping_path(rel_path: str) -> bool:
+    """True for paths that record work rather than perform it.
+
+    These stay writable with no issue IN_PROGRESS and on a protected branch,
+    because between sprints -- exactly when retro, review and planning work
+    happens -- everything else is correctly read-only, which previously pushed
+    record-keeping out of the repo entirely.
+
+    Deliberately NOT a blanket '*.md' exemption: that would unlock README.md
+    and every doc under a source tree, and documentation is often exactly what
+    an issue is scoped to change. Prefixes are matched at directory
+    boundaries, and anything escaping the repo root is refused.
+    """
+    if not rel_path:
+        return False
+    normalized = rel_path.replace("\\", "/")
+    if normalized.startswith("../") or normalized == "..":
+        return False
+    if normalized in RECORD_KEEPING_FILES:
+        return False if "/" in normalized else True
+    first_segment = normalized.split("/", 1)[0]
+    return first_segment in RECORD_KEEPING_PREFIXES
+
+
+def read_target_path(argv: list[str] = None) -> str:
+    """The hook's target path: argv[1] when given, else the JSON payload.
+
+    argv is checked FIRST and stdin is not read at all when argv supplies a
+    path. Reading stdin unconditionally made the gate hang forever when it was
+    invoked with a path from a context whose stdin was an open pipe that never
+    closed -- json.load simply waits.
+    """
+    args = sys.argv if argv is None else argv
+    if len(args) > 1 and args[1]:
+        return args[1]
+
+    try:
+        if sys.stdin.isatty():
+            return ""
+        raw = sys.stdin.read()
+    except Exception:
+        return ""
+
+    if not raw or not raw.strip():
+        return ""
+    try:
+        data = json.loads(raw)
+    except (ValueError, TypeError):
+        return ""
+    if not isinstance(data, dict):
+        return ""
+    tool_input = data.get("tool_input") or {}
+    if not isinstance(tool_input, dict):
+        return ""
+    return tool_input.get("file_path") or tool_input.get("path") or ""
+
+
 def normalize_rel_path(raw_path: str) -> str:
     if not raw_path:
         return ""
@@ -77,29 +138,16 @@ def block(reason: str):
 
 
 def main():
-    target_path = ""
-    if not sys.stdin.isatty():
-        try:
-            data = json.load(sys.stdin)
-            tool_input = data.get("tool_input", {}) or {}
-            target_path = tool_input.get("file_path", "") or tool_input.get("path", "")
-        except Exception:
-            pass
-
-    if not target_path and len(sys.argv) > 1:
-        target_path = sys.argv[1]
+    target_path = read_target_path()
 
     rel_path = normalize_rel_path(target_path)
     if not rel_path:
         sys.exit(0)
 
-    # Allow SoloRail state files, Claude settings, and CLAUDE.md
-    if (
-        rel_path.startswith(".solorail/")
-        or rel_path == ".solorail"
-        or rel_path.startswith(".claude/")
-        or rel_path == "CLAUDE.md"
-    ):
+    # Record-keeping paths (SoloRail state, Claude config, .context scratch)
+    # stay writable with no issue IN_PROGRESS and on a protected branch:
+    # ADR-002 protects application code, and a retro is not that.
+    if is_record_keeping_path(rel_path):
         sys.exit(0)
 
     solorail_dir = os.path.join(os.getcwd(), ".solorail")
