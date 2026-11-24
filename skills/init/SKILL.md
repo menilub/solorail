@@ -28,5 +28,6 @@ allowed-tools: [Read, Glob, Grep, Bash, Write, Edit]
 
 6. **Finish:**
    - Summarize detected mode (`Greenfield` or `Brownfield`) and created files.
+   - Point the user to `.solorail/GUIDE.md` for a full command-by-command walkthrough of the lifecycle.
    - For Greenfield: Prompt user to run `/solorail:discover-prd`.
    - For Brownfield: Prompt user to run `/solorail:status` and complete `.solorail/CONTEXT.md` Section 3 (`Domain Glossary`).

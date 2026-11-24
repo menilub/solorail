@@ -12,6 +12,32 @@
 - **Zero Repo Plumbing:** Skills, hooks, and scripts live in Claude Code's plugin cache; target projects only track clean Markdown state in `.solorail/`.
 - **Automatic Greenfield & Brownfield Onboarding:** `/solorail:init` detects existing codebases, seeds tech stack conventions in `.solorail/CONTEXT.md`, and injects `@.solorail/RULES.md` into `CLAUDE.md` idempotently.
 
+## Lifecycle
+
+```mermaid
+flowchart LR
+    Init(["/solorail:init"]) --> Discover
+
+    Discover["Discover<br/>/solorail:discover-prd"] --> Plan["Plan<br/>/solorail:plan-epic"]
+    Plan --> Architect["Architect<br/>/solorail:architect-issue"]
+    Architect --> Build["Build<br/>/solorail:build-issue"]
+    Build --> Verify["Verify<br/>/solorail:verify-issue"]
+    Verify --> Evolve["Evolve<br/>/solorail:evolve"]
+    Evolve -.->|next sprint| Discover
+
+    Next(["/solorail:next<br/>auto-route"]) -.-> Discover
+    Status(["/solorail:status<br/>read-only dashboard"]) -.-> Discover
+
+    Build -->|blocker found| Block["/solorail:block"]
+    Block -.->|triage next TODO| Build
+
+    Architect -->|scope change| Pivot["/solorail:pivot"]
+    Build -->|scope change| Pivot
+    Pivot -.-> Architect
+
+    Hotfix(["/solorail:hotfix<br/>&le;1h fix, own worktree"]) -.->|logs hours| Evolve
+```
+
 ## Installation
 
 Add this repository as a Claude Code plugin marketplace and install **SoloRail**:

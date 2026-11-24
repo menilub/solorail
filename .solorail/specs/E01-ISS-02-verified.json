@@ -1,0 +1,19 @@
+{
+  "issue_id": "E01-ISS-02",
+  "verified_at": "2026-11-24T14:27:00Z",
+  "status": "DONE",
+  "estimated_hours": 2.5,
+  "actual_hours": 0.5,
+  "actual_hours_method": "measured file-mtime delta between spec creation and GUIDE.md completion (2026-11-24 14:19:26 -> 14:21:39), floored to the sprint's 0.5h minimum increment since real elapsed AI-session time does not map to meaningful developer-hours",
+  "verified_files": [
+    ".solorail/GUIDE.md"
+  ],
+  "acceptance_criteria_met": [
+    ".solorail/GUIDE.md exists",
+    "Contains the same Mermaid lifecycle diagram as README.md, copied verbatim",
+    "All 12 /solorail:* commands documented with reads/writes/hands-off-to",
+    "Commands grouped under stage headings plus Meta & Day-2 group",
+    "CLAUDE.md and skills/ untouched"
+  ],
+  "test_method": "manual inspection + grep (documentation-only issue, no executable logic)"
+}

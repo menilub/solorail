@@ -1,0 +1,19 @@
+{
+  "issue_id": "E01-ISS-03",
+  "verified_at": "2026-11-24T14:30:30Z",
+  "status": "DONE",
+  "estimated_hours": 1.0,
+  "actual_hours": 0.5,
+  "actual_hours_method": "measured file-mtime delta between spec creation and last edit (2026-11-24 14:29:40 -> 14:30:10), floored to the sprint's 0.5h minimum increment",
+  "verified_files": [
+    "CLAUDE.md",
+    "skills/init/SKILL.md"
+  ],
+  "acceptance_criteria_met": [
+    "CLAUDE.md Quick Start links to .solorail/GUIDE.md",
+    "skills/init/SKILL.md step 6 references .solorail/GUIDE.md for both Greenfield and Brownfield paths",
+    "init's detection/scaffolding steps 1-5 unchanged"
+  ],
+  "test_method": "manual inspection + grep (documentation-only issue, no executable logic)",
+  "epic_completed": "E-01"
+}
