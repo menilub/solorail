@@ -1,0 +1,18 @@
+{
+  "issue_id": "E04-ISS-04",
+  "timestamp": "2026-11-25T08:15:00Z",
+  "verified_files": [
+    "README.md",
+    ".solorail/specs/E04-ISS-04-publish-log.md"
+  ],
+  "tests_passed": true,
+  "test_count": 5,
+  "acceptance_criteria_met": [
+    "README has License section with repo link and MIT attribution",
+    "marketplace.json confirmed complete (name, description, version, author, license)",
+    "v0.4.0-beta git tag created at merge commit 6c21e00",
+    "v0.4.0-beta tag pushed to origin",
+    "Epic E-04 all 4 acceptance criteria met; Epic marked DONE"
+  ],
+  "notes": "PR #5 (menilub/solorail-status-v4 -> main) squash-merged. Tag points at the merge commit. Rescoped from CI/CD auto-publish to a one-time manual tag+push per user decision."
+}
