@@ -36,6 +36,25 @@ def split_row(line: str) -> list[str]:
     return [p.strip() for p in parts if p.strip()]
 
 
+SEPARATOR_CELL_RE = re.compile(r'^:?-{1,}:?$')
+
+
+def is_separator_row(line: str) -> bool:
+    """True if every cell is a markdown table separator cell (``---``,
+    ``:---``, ``---:`` or ``:---:``), the standard header/body divider.
+
+    BUG-01: the old parser always treated the row right after the header as
+    this divider and skipped it unconditionally. When that row was missing
+    or had been pushed out of position (e.g. by an Edit that inserted new
+    data rows directly after the header instead of after the divider), the
+    first real data row was silently dropped from every count. Checking the
+    row's actual shape makes the skip conditional on it truly being a
+    divider, wherever -- or whether -- one appears.
+    """
+    cells = split_row(line)
+    return bool(cells) and all(SEPARATOR_CELL_RE.match(c) for c in cells)
+
+
 def parse_markdown_table(lines: list[str], header_marker: str):
     start_idx = None
     for i, line in enumerate(lines):
@@ -46,11 +65,20 @@ def parse_markdown_table(lines: list[str], header_marker: str):
         return None, None, []
 
     rows = []
-    end_idx = start_idx + 2
-    for i in range(start_idx + 2, len(lines)):
+    data_start = start_idx + 1
+    if data_start < len(lines) and is_separator_row(lines[data_start]):
+        data_start += 1
+
+    end_idx = data_start
+    for i in range(data_start, len(lines)):
         line = lines[i].strip()
         if not line.startswith("|"):
             break
+        if is_separator_row(line):
+            # A divider that landed out of position (e.g. below the data
+            # rows) is still never data -- skip it without stopping the scan.
+            end_idx = i + 1
+            continue
         cells = split_row(line)
         rows.append((i, cells))
         end_idx = i + 1
