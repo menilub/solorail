@@ -3,7 +3,7 @@
 - **Start Date:** 2026-11-25
 - **End Date:** 2026-12-08
 - **Capacity:** 20.0h
-- **Status:** ACTIVE
+- **Status:** CLOSED
 
 ## Planned Issues
 | ID | Epic | Issue | Status | Est | Actual | Started At | Notes |
@@ -31,5 +31,3 @@
 - **Total Actual:** 1.0h
 - **Completed / Total Active Issues:** 4 / 4
 - **Scope Changes (Cut Issues):** 1
-<!-- solorail:velocity-summary:end -->
-
