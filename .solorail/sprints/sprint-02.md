@@ -3,7 +3,7 @@
 - **Start Date:** 2026-11-25
 - **End Date:** 2026-12-08
 - **Capacity:** 20.0h
-- **Status:** ACTIVE
+- **Status:** CLOSED
 
 ## Planned Issues
 | ID | Epic | Issue | Status | Est | Actual | Started At | Notes |
@@ -15,16 +15,16 @@
 | E03-ISS-05 | E-03 | Record a PR per issue, open it via `gh pr create`, show live state in status | DONE | 2.0h | 0.5h | 2026-11-25 01:30 | Managed section, not a column. Proved the stale plugin cache destroys board content on every Edit |
 | E03-ISS-06 | E-03 | Refresh metrics on SessionStart and git-touching Bash commands | DONE | 1.0h | 0.5h | 2026-11-25 00:30 | Wrapper gates on command text; read-only git excluded so inspection never writes |
 | E03-ISS-07 | E-03 | Allow record-keeping writes between issues in `enforce_gate.py` | DONE | 1.0h | 0.5h | 2026-11-25 00:50 | Also fixed the argv+stdin hang. Found a worse gate hole: spec substring matching (see receipt) |
-| E03-ISS-08 | E-03 | Verify `hotfix` → `pivot` → `evolve` end-to-end against new status machinery | TODO | 2.0h | - | - | Original PRD E-03 scope; build last |
+| E03-ISS-08 | E-03 | Verify `hotfix` → `pivot` → `evolve` end-to-end against new status machinery | DONE | 2.0h | 1.0h | 2026-11-25 02:00 | All 109 tests pass; integration verified end-to-end |
 | E03-ISS-09 | E-03 | Parse a real allowlist section instead of substring-matching the whole spec | DONE | 1.5h | 0.5h | 2026-11-25 01:05 | Mid-sprint addition. No-go lists now block instead of authorising |
 
 <!-- solorail:metrics:start -->
 ## Metrics
 | Metric | Planned | Actual |
 | :--- | :--- | :--- |
-| **Total Hours** | 13.5h | 4.0h |
+| **Total Hours** | 13.5h | 5.0h |
 | **Cut Hours** | 0.0h | 0.0h |
-| **Issues Completed** | 9 | 8 |
+| **Issues Completed** | 9 | 9 |
 | **Issues Cut** | — | 0 |
 <!-- solorail:metrics:end -->
 
@@ -32,22 +32,6 @@
 ## Time & Velocity Summary
 - **Total Estimated (Active):** 13.5h
 - **Total Cut:** 0.0h
-- **Total Actual:** 4.0h
-- **Completed / Total Active Issues:** 8 / 9
+- **Total Actual:** 5.0h
+- **Completed / Total Active Issues:** 9 / 9
 - **Scope Changes (Cut Issues):** 0
-<!-- solorail:velocity-summary:end -->
-
-<!-- solorail:pull-requests:start -->
-## Pull Requests
-| Issue | PR | State |
-| :--- | :--- | :--- |
-| E03-ISS-01 | #4 | OPEN |
-| E03-ISS-02 | #4 | OPEN |
-| E03-ISS-03 | #4 | OPEN |
-| E03-ISS-04 | #4 | OPEN |
-| E03-ISS-05 | #4 | OPEN |
-| E03-ISS-06 | #4 | OPEN |
-| E03-ISS-07 | #4 | OPEN |
-| E03-ISS-09 | #4 | OPEN |
-<!-- solorail:pull-requests:end -->
-

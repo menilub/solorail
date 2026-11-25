@@ -18,6 +18,7 @@ from sync_metrics import (
     fenced_line_flags,
     find_block_bounds,
     is_closed_sprint,
+    parse_markdown_table,
     render_metrics_table,
     render_velocity_summary,
     replace_block,
@@ -26,6 +27,55 @@ from sync_metrics import (
 
 SUMMARY_MARKER = "## Time & Velocity Summary"
 METRICS_MARKER = "## Metrics"
+
+
+class ParseMarkdownTableTests(unittest.TestCase):
+    """BUG-01: a missing or misplaced separator row must not silently drop
+    the first real data row. parse_markdown_table() used to always treat
+    the line right after the header as the separator, regardless of
+    whether it actually looked like one."""
+
+    def test_missing_separator_still_reads_first_row(self):
+        """RED for BUG-01: no '| :--- | ... |' row after the header at all
+        -- every data row must still be read, none skipped."""
+        lines = [
+            "| ID | Epic | Issue | Status | Est | Actual | Started At | Notes |\n",
+            "| E04-ISS-01 | E-04 | Title one | DONE | 0.5h | 0.5h | - | n |\n",
+            "| E04-ISS-02 | E-04 | Title two | TODO | 1.0h | - | - | n |\n",
+            "\n",
+        ]
+        _, _, rows = parse_markdown_table(lines, "| ID |")
+        ids = [cells[0].strip() for _, cells in rows]
+        self.assertEqual(ids, ["E04-ISS-01", "E04-ISS-02"])
+
+    def test_standard_separator_is_skipped_not_read_as_data(self):
+        """A real '| :--- | ... |' separator row must still be excluded
+        from the data rows (no regression on the normal case)."""
+        lines = [
+            "| ID | Epic | Issue | Status | Est | Actual | Started At | Notes |\n",
+            "| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n",
+            "| E04-ISS-01 | E-04 | Title one | DONE | 0.5h | 0.5h | - | n |\n",
+            "\n",
+        ]
+        _, _, rows = parse_markdown_table(lines, "| ID |")
+        ids = [cells[0].strip() for _, cells in rows]
+        self.assertEqual(ids, ["E04-ISS-01"])
+
+    def test_separator_misplaced_after_data_is_not_read_as_data(self):
+        """Regression for the exact failure mode: an Edit tool inserted new
+        rows directly after the header, pushing the real separator below
+        the data instead of removing it. The separator-shaped row must
+        still be excluded wherever it lands; no real row may be dropped."""
+        lines = [
+            "| ID | Epic | Issue | Status | Est | Actual | Started At | Notes |\n",
+            "| E04-ISS-01 | E-04 | Title one | DONE | 0.5h | 0.5h | - | n |\n",
+            "| E04-ISS-02 | E-04 | Title two | TODO | 1.0h | - | - | n |\n",
+            "| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n",
+            "\n",
+        ]
+        _, _, rows = parse_markdown_table(lines, "| ID |")
+        ids = [cells[0].strip() for _, cells in rows]
+        self.assertEqual(ids, ["E04-ISS-01", "E04-ISS-02"])
 
 
 class ReplaceBlockTests(unittest.TestCase):
