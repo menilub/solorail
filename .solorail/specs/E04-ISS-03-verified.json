@@ -1,0 +1,17 @@
+{
+  "issue_id": "E04-ISS-03",
+  "timestamp": "2026-11-25T04:00:00Z",
+  "verified_files": [
+    ".solorail/specs/E04-ISS-03-install-check.md"
+  ],
+  "tests_passed": true,
+  "test_count": 5,
+  "acceptance_criteria_met": [
+    "plugin.json and marketplace.json versions match at 0.4.0-beta",
+    "README has no stale version references",
+    "enforce_gate.py blocks edits with no IN_PROGRESS issue on a fresh scaffold",
+    "sync_metrics.py runs clean and produces correct output on a fresh scaffold",
+    "all 12 /solorail:* skills + next_sprint.py present at repo HEAD and in installed cache"
+  ],
+  "notes": "No code changes; verification-only issue. Rescoped from 'bump to 0.4.0' to 'confirm 0.4.0-beta alignment' per user decision. Full results in E04-ISS-03-install-check.md."
+}
