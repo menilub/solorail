@@ -10,7 +10,7 @@
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | E04-ISS-01 | E-04 | Wire `next_sprint.py` into `/solorail:evolve` skill | DONE | 0.5h | 0.25h | 2026-11-25 02:30 | One-line edit to evolve skill + test; all tests pass |
 | E04-ISS-02 | E-04 | Update skill instructions to source scripts from `.solorail/scripts/` | CUT | 1.0h | - | - | Cut via Pivot (contradicted PRD §4: "plugin logic stays in Claude Code's plugin cache, not the target repo"; this repo's self-hosting dev friction is a one-time `/plugin update solorail`, not a sprint issue) |
-| E04-ISS-03 | E-04 | Bump version to 0.4.0 and test marketplace install | TODO | 1.0h | - | - | Update plugin.json, marketplace.json, README |
+| E04-ISS-03 | E-04 | Confirm 0.4.0-beta manifest alignment and test marketplace install | IN_PROGRESS | 1.0h | - | 2026-11-25 03:30 | Rescoped: version stays 0.4.0-beta (user decision); verification pass, not a bump |
 | E04-ISS-04 | E-04 | Write marketplace listing and configure auto-publish | TODO | 1.5h | - | - | MVP polish complete; ready for beta |
 | BUG-01 | HOTFIX | `parse_markdown_table` silently drops the first data row when a sprint board's separator row is missing/misplaced | DONE | 1.0h | 0.25h | 2026-11-25 03:00 | Checks row shape before skipping as separator; 3 regression tests added, 22/22 pass |
 

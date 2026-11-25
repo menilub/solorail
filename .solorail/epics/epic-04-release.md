@@ -6,7 +6,7 @@
 
 ## Acceptance Criteria
 - [x] `next_sprint.py` CLI is wired into `/solorail:evolve` skill prose (one-line edit to call the script). *(E04-ISS-01)*
-- [ ] `plugin.json`, `marketplace.json`, and README versions are all set to `0.4.0` and match.
+- [ ] `plugin.json`, `marketplace.json`, and README versions all agree on `0.4.0-beta` (confirmed via user decision 2026-11-25: stays beta, matches the epic's "public beta" goal).
 - [ ] A test user can install SoloRail from the marketplace, run the full `/solorail:*` lifecycle on a greenfield repo, and verify gate enforcement, metrics sync, and Day-2 disruption handling work end-to-end.
 - [ ] Marketplace listing includes a one-line description, link to GitHub repo, and MIT license attribution.
 
