@@ -31,5 +31,3 @@
 - **Total Actual:** 0.8h
 - **Completed / Total Active Issues:** 3 / 4
 - **Scope Changes (Cut Issues):** 1
-<!-- solorail:velocity-summary:end -->
-

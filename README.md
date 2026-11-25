@@ -77,3 +77,7 @@ Inside any greenfield or brownfield repository:
 | `/solorail:block` | Mark an active issue `BLOCKED` and triage the next `TODO` issue |
 | `/solorail:pivot` | Safely absorb mid-sprint scope changes without losing audit history |
 | `/solorail:evolve` | Generate telemetry report, prune ADRs, and roll over next sprint |
+
+## License
+
+MIT — see [LICENSE](./LICENSE). Source: [github.com/menilub/solorail](https://github.com/menilub/solorail).
