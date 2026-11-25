@@ -1,11 +1,23 @@
 #!/usr/bin/env python3
-"""Test that evolve skill wiring calls next_sprint.py via the script."""
+"""Test that evolve skill wiring calls next_sprint.py via the script.
+
+BUG-02: this test originally pointed at the installed plugin cache
+(an absolute path under ~/.claude/plugins/...), not this repo's source.
+That let a live edit to the cache -- which is not tracked by git and is
+wiped on every reinstall -- pass the test while the repo's actual
+skills/evolve/SKILL.md, the file that ships, never got the fix. A test
+verifying a repo's own source must resolve its target relative to the
+repo, never to an installed copy outside it.
+"""
 
 import sys
 import os
 
-# Read the evolve skill file
-skill_path = "/Users/menilub/.claude/plugins/cache/solorail/solorail/0.4.0-beta/skills/evolve/SKILL.md"
+# Resolve relative to this script's location, not the cwd or an
+# installed copy, so the test targets this repo's source regardless of
+# where it's invoked from.
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+skill_path = os.path.join(_REPO_ROOT, "skills", "evolve", "SKILL.md")
 
 try:
     with open(skill_path, 'r') as f:

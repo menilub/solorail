@@ -18,4 +18,4 @@ Check `.solorail/sprints/sprint-XX.md`. If ANY issue is `IN_PROGRESS`, ABORT and
    - If `CONTEXT.md` has more than 15 guardrails or superseded ADRs, archive the oldest entries into `.solorail/archive/adr-history.md` to prevent context token bloat.
 3. **Write Retro & Roll Over:**
    - Create `.solorail/retros/sprint-XX-retro.md` from `.solorail/retros/_TEMPLATE.md` incorporating the telemetry results.
-   - Ask the user if they want to initialize `.solorail/sprints/sprint-(XX+1).md` carrying over unfinished `TODO` or `BLOCKED` issues.
+   - Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/next_sprint.py"` to generate and initialize `.solorail/sprints/sprint-(XX+1).md` carrying over unfinished `TODO` or `BLOCKED` issues. If the script refuses (another sprint is active), skip this step.
